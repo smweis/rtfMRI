@@ -98,7 +98,7 @@ function [apOrPa,dirLengthAfterRegistration] = registerToFirstDicom(subject,subj
         copyfile(fullfile(old_dicom_folder,old_dicom_name),strcat(reg_image_dir,filesep,'new',apOrPa,'.nii.gz'));
         
         % grab path to the bash script for registering to the new DICOM
-        pathToRegistrationScript = fullfile(codePath,'registerEpiToEpi.sh');
+        pathToRegistrationScript = fullfile(codePath,'realTime','main','registerEpiToEpi.sh');
         
         % run registration script name as: register_EPI_to_EPI.sh AP TOME_3040
         cmdStr = [pathToRegistrationScript ' ' apOrPa ' ' subject ' run', whichRun];
