@@ -12,7 +12,7 @@ nextStimNum = length(dir(horzcat(pathToNewStimTextFiles,'/nextStimuli*.txt'))) +
 nextStimFileName = horzcat('nextStimuli',num2str(nextStimNum),'.txt');
 nextStimFullPath = fullfile(pathToNewStimTextFiles,nextStimFileName);
 fid = fopen(nextStimFullPath,'w');
-fprintf(fid,'%d',newStimSuggestion);
+fprintf(fid,'%2.2f',newStimSuggestion);
 fclose(fid);
 
 end
