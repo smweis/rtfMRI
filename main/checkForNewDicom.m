@@ -1,5 +1,8 @@
 function [acqTime,dataTimepoint,roiSignal,initialDirSize,dicomNames] = checkForNewDicom(scannerPath,roiIndex,initialDirSize,scratchPath)
 % Check scanner path for new DICOM(s)
+
+%% To do 
+% Add scannerFunction anonymous function handle as a required input
 %
 % Syntax:
 %  [acqTime,dataTimepoint,roiSignal,initialDirSize,dicomNames] = checkForNewDicom(scannerPath,roiIndex,initialDirSize,scratchPath)

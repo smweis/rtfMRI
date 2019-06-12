@@ -2,6 +2,8 @@ function writeNewStimSuggestion(newStimSuggestion,pathToNewStimTextFiles)
 % Writes a newStimSuggestion (an integer) to a text file, (name of which is 
 % specified in pathToNewStimTextFile. 
 
+%% TODO - CREATE ONE TEXT FILE THAT DOES ALL OF THIS
+
 if ~isnumeric(newStimSuggestion)
     error('newStimSuggestion is an unsupported type');
 end
