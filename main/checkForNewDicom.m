@@ -75,6 +75,7 @@ elseif length(newDir) > initialDirSize
 
     % tic
     parfor j = 1:length(newDicoms)
+    %for j = 1:length(newDicoms)
         thisDicomName = newDicoms(j).name;
         thisDicomPath = newDir(j).folder;
 

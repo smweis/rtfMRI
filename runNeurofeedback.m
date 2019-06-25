@@ -48,6 +48,15 @@ checkForTrigger = false;
 mainData = runNeurofeedback(subject,run,atScanner,'sbref',sbref,'showFig',showFig,'checkForTrigger',checkForTrigger);
 
 % 2. rtSim
+
+subject = 'Ozzy_Test';
+run = '1';
+sbref = '';
+atScanner = true;
+showFig = true;
+checkForTrigger = true;
+mainData = runNeurofeedback(subject,run,atScanner,'sbref',sbref,'showFig',showFig,'checkForTrigger',checkForTrigger);
+
 % 
 %}
 
@@ -60,7 +69,7 @@ p.addRequired('run',@isstr);
 p.addRequired('atScanner',@islogical);
 
 % Optional params
-p.addParameter('sbref', 'raw/PA_run1_SBRef.nii', @isstr);
+p.addParameter('sbref', '', @isstr);
 p.addParameter('showFig', true, @islogical);
 p.addParameter('checkForTrigger', true, @islogical);
 
@@ -78,9 +87,11 @@ runPath = [subjectPath filesep 'processed' filesep 'run' run];
 
 % If we're at the scanner, get the most recently created folder on the scanner path.
 if atScanner
-    thisSessionPath = dir(scannerPathStem); 
+    
+    thisSessionPath = dir(scannerPathStem);
     thisSessionPathSorted = sortrows(struct2table(thisSessionPath),{'isdir','datenum'});
     scannerPath = strcat(table2cell(thisSessionPathSorted(end,'folder')), filesep, table2cell(thisSessionPathSorted(end,'name')));
+    scannerPath = scannerPath{1};
 else
     scannerPath = [scannerPathStem filesep subject filesep 'simulatedScannerDirectory' filesep 'run' run];
 end
@@ -146,7 +157,11 @@ fprintf('Starting real-time processing sequence. To stop press CTRL+C.');
 
 i = 0;
 j = 1;
+
+
 while i < 10000000000
+    
+  
     i = i + 1;
 
     % Check for a new dicom, do some processing. 

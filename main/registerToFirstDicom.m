@@ -1,11 +1,11 @@
-function [apOrPa,dirLengthAfterRegistration] = registerToFirstDicom(subject,subjectPath,whichRun,scannerPath,codePath,sbref)
+function [apOrPa,dirLengthAfterRegistration] = registerToFirstDicom(subject,subjectPath,run,scannerPath,codePath,varargin)
 % Register to the real time fmri sequence
 %
 %
 %
 %
 % Syntax:
-%  [apOrPa,dirLengthAfterRegistration] = registerToFirstDicom(subject,subjectPath,whichRun,scannerPath,codePath,sbref)
+%  [apOrPa,dirLengthAfterRegistration] = registerToFirstDicom(subject,subjectPath,run,scannerPath,codePath,sbref)
 %
 % Description:
 % Part of the real-time fmri pipeline. Will apply a pre-calculated 
@@ -17,7 +17,7 @@ function [apOrPa,dirLengthAfterRegistration] = registerToFirstDicom(subject,subj
 % Inputs:
 %   subject                     - string specifying subject ID
 %   subjectPath                 - string specifying subject path (local)
-%   whichRun                    - integer specifying run number
+%   run                         - integer specifying run number
 %   scannerPath                 - string specifying path to dicoms
 %                                 (scanner)
 %   codePath                    - string specifying path to neurofeedback
@@ -31,80 +31,94 @@ function [apOrPa,dirLengthAfterRegistration] = registerToFirstDicom(subject,subj
 %                                 return an empty string if not applicable.
 %   dirLengthAfterRegistration  - integer, specifying the number of files 
 %                                 in the directory after registration
+%% Parse input
+p = inputParser;
 
+% Required input
+p.addRequired('subject',@isstr);
+p.addRequired('subjectPath',@isstr);
+p.addRequired('run',@isstr);
+p.addRequired('scannerPath',@isstr);
+p.addRequired('codePath',@isstr);
 
-    if nargin < 6
-        % Wait for the initial dicom
-        initial_dir = dir([scannerPath filesep '*00001.dcm']); % count all the FIRST DICOMS in the directory
-        fprintf('Waiting for first DICOM...\n');
-        
-        while(1)
-            % Check files in scannerPath
-            new_dir = dir([scannerPath filesep '*00001.dcm']); 
-            % If there's a new FIRST DICOM
-            if length(new_dir) > length(initial_dir) 
-                % Save this to initialize the check_for_new_dicoms function
-                reg_dicom_name = new_dir(end).name;
-                reg_dicom_path = new_dir(end).folder;
-                dirLengthAfterRegistration = length(dir(scannerPath)); 
-                reg_dicom = fullfile(reg_dicom_path,reg_dicom_name);
-                break
-            else
-                pause(0.01);
-            end
+% Optional params
+p.addParameter('sbref', '', @isstr);
+
+% Parse
+p.parse( subject, subjectPath, run, scannerPath, codePath, varargin{:});
+
+if isempty(p.Results.sbref)
+    % Wait for the initial dicom
+    initial_dir = dir([scannerPath filesep '*00001.dcm']); % count all the FIRST DICOMS in the directory
+    fprintf('Waiting for first DICOM...\n');
+    
+    while(1)
+        % Check files in scannerPath
+        new_dir = dir([scannerPath filesep '*00001.dcm']);
+        % If there's a new FIRST DICOM
+        if length(new_dir) > length(initial_dir)
+            % Save this to initialize the check_for_new_dicoms function
+            reg_dicom_name = new_dir(end).name;
+            reg_dicom_path = new_dir(end).folder;
+            dirLengthAfterRegistration = length(dir(scannerPath));
+            reg_dicom = fullfile(reg_dicom_path,reg_dicom_name);
+            break
+        else
+            pause(0.01);
         end
-    else
-        % If there's an sbref, set that image as the one to register
-        reg_dicom = sbref;
-        dirLengthAfterRegistration = 0;
     end
-    
-    
-    
-    
-        fprintf('Performing registration on first DICOM\n');
-        
-        %% Complete Registration to First DICOM
-        
-        % Create the directory on the local computer where the registered
-        % images will go
-        reg_image_dir = strcat(subjectPath,filesep,'processed',filesep,'run',whichRun);
-        mkdir(reg_image_dir);
-        
-        % convert the first DICOM to a NIFTI
-        if strcmp(reg_dicom,'dcm')
-            dicm2nii(reg_dicom,reg_image_dir);
-            old_dicom_dir = dir(strcat(reg_image_dir,filesep,'*.nii*'));
-            old_dicom_name = old_dicom_dir.name;
-            old_dicom_folder = old_dicom_dir.folder;
-        else
-            old_dicom_name = sbref;
-            old_dicom_folder = '';
-        end
-        
-        % Check if this is a PA sequence or an AP sequence (based on the
-        % name of the acquisition). If neither, return empty string. 
-        ap_check = strfind(old_dicom_name,'AP');
-        pa_check = strfind(old_dicom_name,'PA');
-        if ap_check
-            apOrPa = 'AP';
-        elseif pa_check
-            apOrPa = 'PA';
-        else
-            apOrPa = '';
-        end
-        
-        
-        copyfile(fullfile(old_dicom_folder,old_dicom_name),strcat(reg_image_dir,filesep,'new',apOrPa,'.nii.gz'));
-        
-        % grab path to the bash script for registering to the new DICOM
-        pathToRegistrationScript = fullfile(codePath,'realTime','main','registerEpiToEpi.sh');
-        
-        % run registration script name as: register_EPI_to_EPI.sh AP TOME_3040
-        cmdStr = [pathToRegistrationScript ' ' apOrPa ' ' subject ' run', whichRun];
-        system(cmdStr);
-        
-        fprintf('Registration Complete. \n');
+else
+    % If there's an sbref, set that image as the one to register
+    reg_dicom = p.Results.sbref;
+    dirLengthAfterRegistration = length(dir(scannerPath));
+end
 
-    
+
+
+
+fprintf('Performing registration on first DICOM\n');
+
+%% Complete Registration to First DICOM
+
+% Create the directory on the local computer where the registered
+% images will go
+reg_image_dir = strcat(subjectPath,filesep,'processed',filesep,'run',run);
+mkdir(reg_image_dir);
+
+% convert the first DICOM to a NIFTI
+if ~isempty(p.Results.sbref)
+    dicm2nii(reg_dicom,reg_image_dir);
+    old_dicom_dir = dir(strcat(reg_image_dir,filesep,'*.nii*'));
+    old_dicom_name = old_dicom_dir.name;
+    old_dicom_folder = old_dicom_dir.folder;
+else
+    old_dicom_name = p.Results.sbref;
+    old_dicom_folder = subjectPath;
+end
+
+% Check if this is a PA sequence or an AP sequence (based on the
+% name of the acquisition). If neither, return empty string.
+ap_check = strfind(old_dicom_name,'AP');
+pa_check = strfind(old_dicom_name,'PA');
+if ap_check
+    apOrPa = 'AP';
+elseif pa_check
+    apOrPa = 'PA';
+else
+    apOrPa = '';
+end
+
+
+copyfile(fullfile(old_dicom_folder,old_dicom_name),strcat(reg_image_dir,filesep,'new',apOrPa,'.nii.gz'));
+
+% grab path to the bash script for registering to the new DICOM
+pathToRegistrationScript = fullfile(codePath,'realTime','main','registerEpiToEpi.sh');
+
+% run registration script name as: register_EPI_to_EPI.sh AP TOME_3040
+cmdStr = [pathToRegistrationScript ' ' apOrPa ' ' subject ' run', run];
+system(cmdStr);
+
+fprintf('Registration Complete. \n');
+
+
 end
