@@ -47,13 +47,21 @@ showFig = true;
 checkForTrigger = false;
 mainData = runNeurofeedback(subject,run,atScanner,'sbref',sbref,'showFig',showFig,'checkForTrigger',checkForTrigger);
 
-% 2. rtSim
+% 2. Sanity check.
+subject = 'Ozzy_Test';
+run = '0';
+sbref = '';
+atScanner = true;
+showFig = true;
+checkForTrigger = true;
+mainData = runNeurofeedback(subject,run,atScanner,'sbref',sbref,'showFig',showFig,'checkForTrigger',checkForTrigger);
 
+% 3. Q+.
 subject = 'Ozzy_Test';
 run = '1';
 sbref = '';
 atScanner = true;
-showFig = true;
+showFig = false;
 checkForTrigger = true;
 mainData = runNeurofeedback(subject,run,atScanner,'sbref',sbref,'showFig',showFig,'checkForTrigger',checkForTrigger);
 
