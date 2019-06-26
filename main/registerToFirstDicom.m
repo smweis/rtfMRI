@@ -8,10 +8,10 @@ function [apOrPa,dirLengthAfterRegistration] = registerToFirstDicom(subject,subj
 %  [apOrPa,dirLengthAfterRegistration] = registerToFirstDicom(subject,subjectPath,run,scannerPath,codePath,sbref)
 %
 % Description:
-% Part of the real-time fmri pipeline. Will apply a pre-calculated 
-% registration matrix to new fmri data. This will either be based on a 
-% single-band reference (sbref) image. Or, it will register to the 
-% first DICOM collected. It will return whether the scan is AP or PA 
+% Part of the real-time fmri pipeline. Will apply a pre-calculated
+% registration matrix to new fmri data. This will either be based on a
+% single-band reference (sbref) image. Or, it will register to the
+% first DICOM collected. It will return whether the scan is AP or PA
 % direction based on whether PA or AP is present in the NIFTI file name.
 %
 % Inputs:
@@ -23,13 +23,13 @@ function [apOrPa,dirLengthAfterRegistration] = registerToFirstDicom(subject,subj
 %   codePath                    - string specifying path to neurofeedback
 %                                 scripts
 % Optional Input:
-%   sbref                       - path and file name to the sbref image dicom 
+%   sbref                       - path and file name to the sbref image dicom
 %
 % Outputs:
 %   apOrPa                      - string specifying whether run is in the
 %                                 AP direction or the PA direction. Will
 %                                 return an empty string if not applicable.
-%   dirLengthAfterRegistration  - integer, specifying the number of files 
+%   dirLengthAfterRegistration  - integer, specifying the number of files
 %                                 in the directory after registration
 %% Parse input
 p = inputParser;
@@ -51,12 +51,15 @@ if isempty(p.Results.sbref)
     % Wait for the initial dicom
     initial_dir = dir([scannerPath filesep '*00001.dcm']); % count all the FIRST DICOMS in the directory
     fprintf('Waiting for first DICOM...\n');
-    
+
     while(1)
         % Check files in scannerPath
         new_dir = dir([scannerPath filesep '*00001.dcm']);
         % If there's a new FIRST DICOM
         if length(new_dir) > length(initial_dir)
+          fprintf('Performing registration on first DICOM\n');
+
+          %% Complete Registration to First DICOM
             % Save this to initialize the check_for_new_dicoms function
             reg_dicom_name = new_dir(end).name;
             reg_dicom_path = new_dir(end).folder;
@@ -70,15 +73,16 @@ if isempty(p.Results.sbref)
 else
     % If there's an sbref, set that image as the one to register
     reg_dicom = p.Results.sbref;
+    fprintf('Performing registration on SBREF\n');
+
+    %% Complete Registration to First DICOM
     dirLengthAfterRegistration = length(dir(scannerPath));
 end
 
 
 
 
-fprintf('Performing registration on first DICOM\n');
 
-%% Complete Registration to First DICOM
 
 % Create the directory on the local computer where the registered
 % images will go

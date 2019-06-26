@@ -1,6 +1,6 @@
 function [mainData,firstTriggerTime] = runNeurofeedback(subject,run,atScanner,varargin)
 
-% The main function for the real-time fMRI pipeline on the scanner. 
+% The main function for the real-time fMRI pipeline on the scanner.
 %
 % Syntax:
 %   mainData = runNeurofeedback(subject,run,atScanner,varargin)
@@ -8,26 +8,26 @@ function [mainData,firstTriggerTime] = runNeurofeedback(subject,run,atScanner,va
 % Description:
 %	Takes in the subject and run IDs. Can either simulate the pipeline
 %	based on 'fake' scanner data (a local directory of DICOMs) or based on
-%	data actually being acquired at the scanner. 
+%	data actually being acquired at the scanner.
 %
 % Inputs:
-%   subject               - String. The name/ID of the subject. 
+%   subject               - String. The name/ID of the subject.
 %   run                   - String. The run or acquisition number. Will
 %                           generate a folder with the string 'run' before
-%                           it. 
+%                           it.
 %   atScanner             - Logical. Are you actually at the scanner?
 
 % Optional key/value pairs:
 %  'sbref'                - String. If included, the path to the sbref
 %                           DICOM. If sbref is empty, will register to the
-%                           first DICOM from the run. 
+%                           first DICOM from the run.
 %  'showFig'              - Logical. If true, will show a figure of the
-%                           mean results. 
-%  'checkForTrigger'      - Logical. If true, will wait for a trigger ('t'). 
-% 
+%                           mean results.
+%  'checkForTrigger'      - Logical. If true, will wait for a trigger ('t').
+%
 % Outputs:
 %   mainData              - Struct. Contains the main processed fMRI data
-%                           as well as time stamps. 
+%                           as well as time stamps.
 
 
 
@@ -37,7 +37,7 @@ function [mainData,firstTriggerTime] = runNeurofeedback(subject,run,atScanner,va
 
 % 1. rtMockScanner
 % Run through a simulated scanner. Copy and paste the DICOMs from one
-% directory to another to make sure all paths are set up appropriately. 
+% directory to another to make sure all paths are set up appropriately.
 
 subject = 'TOME_3021_rtMockScanner';
 run = '1';
@@ -57,7 +57,7 @@ showFig = true;
 checkForTrigger = true;
 mainData = runNeurofeedback(subject,run,atScanner,'sbref',sbref,'showFig',showFig,'checkForTrigger',checkForTrigger);
 
-% 
+%
 %}
 
 %% Parse input
@@ -87,7 +87,7 @@ runPath = [subjectPath filesep 'processed' filesep 'run' run];
 
 % If we're at the scanner, get the most recently created folder on the scanner path.
 if atScanner
-    
+
     thisSessionPath = dir(scannerPathStem);
     thisSessionPathSorted = sortrows(struct2table(thisSessionPath),{'isdir','datenum'});
     scannerPath = strcat(table2cell(thisSessionPathSorted(end,'folder')), filesep, table2cell(thisSessionPathSorted(end,'name')));
@@ -106,20 +106,20 @@ end
 if ~isempty(p.Results.sbref)
     sbrefFullPath = [subjectPath filesep p.Results.sbref];
     [ap_or_pa,initialDirSize] = registerToFirstDicom(subject,subjectPath,run,scannerPath,codePath,sbrefFullPath);
-    
+
     if p.Results.checkForTrigger
         firstTriggerTime = waitForTrigger;
     end
 
 
 % If we are registering to the first DICOM, then we want to wait for the
-% trigger first, then register. 
+% trigger first, then register.
 
 else
     if p.Results.checkForTrigger
         firstTriggerTime = waitForTrigger;
     end
-    
+
     [ap_or_pa,initialDirSize] = registerToFirstDicom(subject,subjectPath,run,scannerPath,codePath);
 end
 
@@ -127,15 +127,17 @@ end
 
 
 %% Load the ROI
-
 roiName = ['ROI_to_new',ap_or_pa,'_bin.nii.gz'];
 roiPath = [subjectPath filesep 'processed' filesep 'run' run filesep roiName];
 roiIndex = loadRoi(roiPath);
 
-
+%% Spot check and press any key to continue.
+cmd = horzcat('/usr/local/fsl/bin/fsleyes ', runPath,'new',ap_or_pa,'.nii.gz ',roiPath);
+system(cmd);
+fprintf('Check registration then press any key to continue.')
+pause;
 
 %% Initialize figure
-
 if p.Results.showFig
     figure;
     hold on;
@@ -160,31 +162,31 @@ j = 1;
 
 
 while i < 10000000000
-    
-  
+
+
     i = i + 1;
 
-    % Check for a new dicom, do some processing. 
+    % Check for a new dicom, do some processing.
     % TO DO HERE IS TO REQUIRE checkForNewDicom to take in an anonymous
     % scannerFunction. Right now scannerFunction is an actual function that
-    % just takes the mean of all voxels in the ROI. 
+    % just takes the mean of all voxels in the ROI.
     [mainData(j).acqTime,mainData(j).dataTimepoint,mainData(j).roiSignal,...
      initialDirSize, mainData(j).dicomName] = ...
      checkForNewDicom(scannerPath,roiIndex,initialDirSize,scratchPath);
-    
+
 
     % Vectorize data for plotting
     dataPlot(end+1:end+length(mainData(j).roiSignal)) = mainData(j).roiSignal;
-   
-    % Simple line plot. 
+
+    % Simple line plot.
     plot(dataPlot,'black');
- 
+
     % Write out a file to the run directory each time a new mainData struct is written.
     save(fullfile(runPath,'mainData'),'mainData');
- 
- 
+
+
     j = j + 1;
-    
+
     pause(.01);
-    
+
 end
