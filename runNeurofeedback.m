@@ -39,10 +39,17 @@ function [mainData,firstTriggerTime] = runNeurofeedback(subject,run,atScanner,va
 % Run through a simulated scanner. Copy and paste the DICOMs from one
 % directory to another to make sure all paths are set up appropriately.
 
+% To run this, copy and paste the code below into Matlab. When you are
+% notified that the script is waiting for registration, copy and paste the
+% 'FakeFirstDICOM0000001.dcm' file from [subject]/run1_toCopy/ to [subject]/run1
+% After registration, copy and paste a set of dicoms from that same pair of
+% directories. 
+
+
 subject = 'TOME_3021_rtMockScanner';
 run = '1';
 atScanner = false;
-sbref = ['raw' filesep 'PA_run1_SBRef.nii'];
+sbref = '';
 showFig = true;
 checkForTrigger = false;
 mainData = runNeurofeedback(subject,run,atScanner,'sbref',sbref,'showFig',showFig,'checkForTrigger',checkForTrigger);
@@ -50,10 +57,10 @@ mainData = runNeurofeedback(subject,run,atScanner,'sbref',sbref,'showFig',showFi
 % 2. Sanity check.
 subject = 'Ozzy_Test';
 run = '0';
-sbref = '';
+sbref = 'GKA_0806567_201914421414111_006_000001.dcm';
 atScanner = true;
 showFig = true;
-checkForTrigger = true;
+checkForTrigger = false;
 mainData = runNeurofeedback(subject,run,atScanner,'sbref',sbref,'showFig',showFig,'checkForTrigger',checkForTrigger);
 
 % 3. Q+.
@@ -62,7 +69,7 @@ run = '1';
 sbref = '';
 atScanner = true;
 showFig = false;
-checkForTrigger = true;
+checkForTrigger = false;
 mainData = runNeurofeedback(subject,run,atScanner,'sbref',sbref,'showFig',showFig,'checkForTrigger',checkForTrigger);
 
 %
@@ -113,7 +120,8 @@ end
 % If there is an sbref, register to that. Else register to first DICOM.
 if ~isempty(p.Results.sbref)
     sbrefFullPath = [subjectPath filesep p.Results.sbref];
-    [ap_or_pa,initialDirSize] = registerToFirstDicom(subject,subjectPath,run,scannerPath,codePath,sbrefFullPath);
+    [ap_or_pa,initialDirSize] = registerToFirstDicom(subject,subjectPath,run,scannerPath,codePath,'sbref',sbrefFullPath);
+
 
     if p.Results.checkForTrigger
         firstTriggerTime = waitForTrigger;
@@ -140,7 +148,7 @@ roiPath = [subjectPath filesep 'processed' filesep 'run' run filesep roiName];
 roiIndex = loadRoi(roiPath);
 
 %% Spot check and press any key to continue.
-cmd = horzcat('/usr/local/fsl/bin/fsleyes ', runPath,'new',ap_or_pa,'.nii.gz ',roiPath);
+cmd = ['/usr/local/fsl/bin/fsleyes ', runPath,filesep,'new',ap_or_pa,'.nii.gz ',roiPath];
 system(cmd);
 fprintf('Check registration then press any key to continue.')
 pause;

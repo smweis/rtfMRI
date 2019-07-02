@@ -5,7 +5,7 @@ function [apOrPa,dirLengthAfterRegistration] = registerToFirstDicom(subject,subj
 %
 %
 % Syntax:
-%  [apOrPa,dirLengthAfterRegistration] = registerToFirstDicom(subject,subjectPath,run,scannerPath,codePath,sbref)
+%  [apOrPa,dirLengthAfterRegistration] = registerToFirstDicom(subject,subjectPath,run,scannerPath,codePath,varargin)
 %
 % Description:
 % Part of the real-time fmri pipeline. Will apply a pre-calculated
@@ -76,7 +76,7 @@ else
     fprintf('Performing registration on SBREF\n');
 
     %% Complete Registration to First DICOM
-    dirLengthAfterRegistration = length(dir(scannerPath));
+    dirLengthAfterRegistration = length(dir(strcat(scannerPath,'*.dcm')));
 end
 
 
@@ -87,17 +87,27 @@ end
 % Create the directory on the local computer where the registered
 % images will go
 reg_image_dir = strcat(subjectPath,filesep,'processed',filesep,'run',run);
-mkdir(reg_image_dir);
+if exist(reg_image_dir,'dir')
+    error(['Delete ' reg_image_dir ' then re-run']);
+else
+    mkdir(reg_image_dir);
+end
+
 
 % convert the first DICOM to a NIFTI
-if ~isempty(p.Results.sbref)
+if isempty(p.Results.sbref)
     dicm2nii(reg_dicom,reg_image_dir);
     old_dicom_dir = dir(strcat(reg_image_dir,filesep,'*.nii*'));
     old_dicom_name = old_dicom_dir.name;
     old_dicom_folder = old_dicom_dir.folder;
 else
+    if strcmp(p.Results.sbref,'*dcm*')
+        dicm2nii(p.Results.sbref,reg_image_dir);
+    end
+    old_dicom_dir = dir(strcat(reg_image_dir,filesep,'*.nii*'));
     old_dicom_name = p.Results.sbref;
     old_dicom_folder = subjectPath;
+    disp(['The name of the sbref file is' old_dicom_name]);
 end
 
 % Check if this is a PA sequence or an AP sequence (based on the

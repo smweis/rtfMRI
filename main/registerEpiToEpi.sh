@@ -12,9 +12,8 @@ run_dir="/Users/nfuser/Documents/rtQuest/${2}/processed/${3}"
 
 newNifti=new"$1".nii
 
-#extract brain  new file
+#extract brain new file
 
-fslroi $run_dir/$newNifti $run_dir/$newNifti 0 104 0 104 0 72 0 1
 bet $run_dir/$newNifti $run_dir/$newNifti
 
 
