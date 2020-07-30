@@ -96,10 +96,10 @@ end
 
 % convert the first DICOM to a NIFTI
 if isempty(p.Results.sbref)
-    command = strcat('dcm2niix -z y -o ',reg_image_dir, ' ',reg_dicom);
+    command = strcat('dicm2niix -z y -o ',reg_image_dir, ' ',reg_dicom);
     [status,cmdout] = system(command);
     if status ~= 0
-        error('Could not convert dicom to nifti. Perhaps dcm2niix is not installed?\n %s',cmdout);
+        error('Could not convert dicom to nifti. Perhaps dicm2niix is not installed?\n %s',cmdout);
     end
     
     old_dicom_dir = dir(strcat(reg_image_dir,filesep,'*.nii*'));
@@ -107,10 +107,10 @@ if isempty(p.Results.sbref)
     old_dicom_folder = old_dicom_dir.folder;
 else
     if strcmp(p.Results.sbref,'*dcm*')
-        command = strcat('dcm2niix -z y -o ',reg_image_dir,' ',p.Results.sbref);
+        command = strcat('dicm2niix -z y -o ',reg_image_dir,' ',p.Results.sbref);
         [status,cmdout] = system(command);
         if status ~= 0
-            error('Could not convert dicom to nifti. Perhaps dcm2niix is not installed?\n %s',cmdout);
+            error('Could not convert dicom to nifti. Perhaps dicm2niix is not installed?\n %s',cmdout);
         end
     end
     old_dicom_dir = dir(strcat(reg_image_dir,filesep,'*.nii*'));
