@@ -10,7 +10,7 @@ subject_dir=${2}
 run_dir=${2}/${3}
 
 
-newNifti=new"$1".nii
+newNifti=new"$1".nii.gz
 
 #extract brain new file
 
