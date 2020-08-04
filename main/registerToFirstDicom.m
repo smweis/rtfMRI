@@ -139,10 +139,14 @@ copyfile(fullfile(old_dicom_folder,old_dicom_name),strcat(reg_image_dir,filesep,
 pathToRegistrationScript = fullfile(codePath,'realTime','main','registerEpiToEpi.sh');
 
 % run registration script name as: register_EPI_to_EPI.sh AP TOME_3040
-cmdStr = [pathToRegistrationScript ' ' apOrPa ' ' subject ' run', run];
-system(cmdStr);
-
-fprintf('Registration Complete. \n');
+command = [pathToRegistrationScript ' ' apOrPa ' ' subject ' run', run];
+[status,cmdout] = system(command);
+        fprintf(cmdout);
+if status ~= 0
+    error('Could not complete registration. Perhaps fsl is not installed?\n %s',cmdout);
+else
+    fprintf('Registration Complete. \n');
+end
 
 
 end
