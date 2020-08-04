@@ -148,7 +148,7 @@ roiPath = [subjectPath filesep 'processed' filesep 'run' run filesep roiName];
 roiIndex = loadRoi(roiPath);
 
 %% Spot check and press any key to continue.
-cmd = ['/usr/local/fsl/bin/fsleyes ', runPath,filesep,'new',ap_or_pa,'.nii.gz ',roiPath];
+cmd = ['fsleyes ', runPath,filesep,'new',ap_or_pa,'.nii.gz ',roiPath];
 system(cmd);
 fprintf('Check registration then press any key to continue.')
 pause;
