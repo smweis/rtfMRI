@@ -1,13 +1,13 @@
 # This script will take a participant's AP/PA bold scans and register a parcel to a sample scan.
 # Step 1. Execute this (run from matlab script) with required variables, scan direction (AP or PA) and subj. number
-#           bash register_EPI_to_EPI.sh AP TOME_3040 run1
+#           bash register_EPI_to_EPI.sh AP [subjectDir] [runDir]
 
 
 
 
 #Where are the processed pre-scan data?
-subject_dir="/Users/nfuser/Documents/rtQuest/${2}/processed"
-run_dir="/Users/nfuser/Documents/rtQuest/${2}/processed/${3}"
+subject_dir=${2}
+run_dir=${2}/${3}
 
 
 newNifti=new"$1".nii

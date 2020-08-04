@@ -137,9 +137,8 @@ copyfile(fullfile(old_dicom_folder,old_dicom_name),strcat(reg_image_dir,filesep,
 
 % grab path to the bash script for registering to the new DICOM
 pathToRegistrationScript = fullfile(codePath,'realTime','main','registerEpiToEpi.sh');
-
 % run registration script name as: register_EPI_to_EPI.sh AP TOME_3040
-command = [pathToRegistrationScript ' ' apOrPa ' ' subject ' run', run];
+command = [pathToRegistrationScript ' ' apOrPa ' ' subjectPath ' run', run];
 [status,cmdout] = system(command);
         fprintf(cmdout);
 if status ~= 0
