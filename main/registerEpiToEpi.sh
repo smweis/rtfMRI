@@ -1,6 +1,6 @@
 # This script will take a participant's AP/PA bold scans and register a parcel to a sample scan.
 # Step 1. Execute this (run from matlab script) with required variables, scan direction (AP or PA) and subj. number
-#           bash register_EPI_to_EPI.sh AP [subjectDir] [runDir]
+#           bash register_EPI_to_EPI.sh AP [subjectDir] [runDir relative to subjectDir]
 
 
 
