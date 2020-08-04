@@ -16,8 +16,8 @@ end
 
 newNiftiName = dir(strcat(newNiftiPath,'/*.nii'));
 newNiftiName = fullfile(newNiftiPath,newNiftiName.name);
-targetNifti = load_untouch_nii(newNiftiName);
-targetIm = targetNifti.img;
+targetNifti = niftiinfo(newNiftiName);
+targetIm = niftiread(targetNifti);
 
 
 
