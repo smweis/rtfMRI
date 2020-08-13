@@ -51,19 +51,21 @@ if isempty(p.Results.sbref)
     % Wait for the initial dicom
     initial_dir = dir([scannerPath filesep '*00001.dcm']); % count all the FIRST DICOMS in the directory
     fprintf('Waiting for first DICOM...\n');
+    firstDicom = false;
 
-    while(1)
+    while(~firstDicom)
         % Check files in scannerPath
         new_dir = dir([scannerPath filesep '*00001.dcm']);
         % If there's a new FIRST DICOM
         if length(new_dir) > length(initial_dir)
           fprintf('Performing registration on first DICOM\n');
+          firstDicom = true;
 
           %% Complete Registration to First DICOM
             % Save this to initialize the check_for_new_dicoms function
             reg_dicom_name = new_dir(end).name;
             reg_dicom_path = new_dir(end).folder;
-            dirLengthAfterRegistration = length(dir(scannerPath));
+            dirLengthAfterRegistration = length(dir(strcat(scannerPath,filesep,'*.dcm')));
             reg_dicom = fullfile(reg_dicom_path,reg_dicom_name);
             break
         else

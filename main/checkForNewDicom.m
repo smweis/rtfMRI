@@ -43,50 +43,51 @@ function [acqTime,dataTimepoint,roiSignal,initialDirSize,dicomNames] = checkForN
 % Dependencies:
 %   scannerFunction, dicomToNiftiAndWorkspace
 
+isNewDicom = false;
+
+while ~isNewDicom
+    % Save an initial time stamp.
+    acqTime = datetime;
+
+    % Check files in scannerPath.
+    newDir = dir(strcat(scannerPath,filesep,'*.dcm'));
+
+    % If no new files, call the function again
+    if length(newDir) == initialDirSize
+        pause(0.01);
+
+    % If there are new files, check for the number of DICOMs missed (missedDicomNumber)
+    % then reset the number of files in the directory (initialDirSize)
+    % and then get the info of the new DICOMs (newDicoms).
+    elseif length(newDir) > initialDirSize
+        missedDicomNumber = length(newDir) - initialDirSize;
+        initialDirSize = length(newDir);
+        newDicoms = newDir(end + 1 - missedDicomNumber:end); 
+        isNewDicom = true;
+        fprintf('\nNew DICOM found');
 
 
-% Save an initial time stamp.
-acqTime = datetime;
+    % Process the DICOMs into NIFTIs in a parallel computing loop.
+    % For each new DICOM, dicomToNiftiAndWorkspace will save it as a NIFTI in the
+    % scratchPath and as a targetIm in the workspace. Then it will computed
+    % scannerFunction, and return the signal in the ROI (roiSignal) and a timestamp (dataTimePoint).
+    % Each loop will also save the dicomName.
 
-% Check files in scannerPath.
-newDir = dir(strcat(scannerPath,filesep,'*.dcm'));
+        % tic
+        parfor j = 1:length(newDicoms)
+        %for j = 1:length(newDicoms)
+            thisDicomName = newDicoms(j).name;
+            thisDicomPath = newDir(j).folder;
 
-% If no new files, call the function again
-if length(newDir) == initialDirSize
-    pause(0.01);
-    [acqTime,dataTimepoint,roiSignal,initialDirSize,dicomNames] = checkForNewDicom(scannerPath,roiIndex,initialDirSize,scratchPath);
+            targetIm = dicomToNiftiAndWorkspace(thisDicomName,thisDicomPath,scratchPath);
 
+            [roiSignal(j),dataTimepoint(j)] = scannerFunction(targetIm,roiIndex);
 
-% If there are new files, check for the number of DICOMs missed (missedDicomNumber)
-% then reset the number of files in the directory (initialDirSize)
-% and then get the info of the new DICOMs (newDicoms).
-elseif length(newDir) > initialDirSize
-    missedDicomNumber = length(newDir) - initialDirSize;
-    initialDirSize = length(newDir);
-    newDicoms = newDir(end + 1 - missedDicomNumber:end);
+            dicomNames{j} = thisDicomName;
+        end
+        %toc
 
-
-
-% Process the DICOMs into NIFTIs in a parallel computing loop.
-% For each new DICOM, dicomToNiftiAndWorkspace will save it as a NIFTI in the
-% scratchPath and as a targetIm in the workspace. Then it will computed
-% scannerFunction, and return the signal in the ROI (roiSignal) and a timestamp (dataTimePoint).
-% Each loop will also save the dicomName.
-
-    % tic
-    parfor j = 1:length(newDicoms)
-    %for j = 1:length(newDicoms)
-        thisDicomName = newDicoms(j).name;
-        thisDicomPath = newDir(j).folder;
-
-        targetIm = dicomToNiftiAndWorkspace(thisDicomName,thisDicomPath,scratchPath);
-
-        [roiSignal(j),dataTimepoint(j)] = scannerFunction(targetIm,roiIndex);
-
-        dicomNames{j} = thisDicomName;
     end
-    %toc
-
 end
 
 end
