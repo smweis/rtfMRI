@@ -74,7 +74,7 @@ while ~isNewDicom
     % Each loop will also save the dicomName.
 
         % tic
-        parfor j = 1:length(newDicoms)
+        for j = 1:length(newDicoms)
         %for j = 1:length(newDicoms)
             thisDicomName = newDicoms(j).name;
             thisDicomPath = newDir(j).folder;
