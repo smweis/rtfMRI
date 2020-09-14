@@ -6,12 +6,15 @@ function [targetIm] = dicomToNiftiAndWorkspace(dicomName,dicomPath,scratchPath)
 
 fileName = dicomName(1:end-4); 
 newNiftiPath = fullfile(scratchPath,'niftis');
-mkdir(newNiftiPath);
+if ~exist(newNiftiPath, 'dir')
+    mkdir(newNiftiPath);
+end
 
 
 % Convert DICOM to NIFTI (.nii) and load NIFTI into Matlab
 % Save it in the scratchPath. 
-command = horzcat('dcm2niix -f ',fileName,' -o ',newNiftiPath,' ',fullfile(dicomPath,dicomName));
+% TODO: convert to `-f %s_%r
+command = horzcat('dcm2niix -f ',filename,' -o ',newNiftiPath,' ',fullfile(dicomPath,dicomName));
     [status,cmdout] = system(command);
 if status ~= 0
     error('Could not convert dicom to nifti. Perhaps dcm2niix is not installed?\n %s',cmdout);
