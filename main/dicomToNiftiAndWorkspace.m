@@ -14,7 +14,7 @@ end
 % Convert DICOM to NIFTI (.nii)
 % Save it in the scratchPath. 
 % TODO: convert to `-f %s_%r
-command = horzcat('dcm2niix -f %s_%r -o ',newNiftiPath,' ',fullfile(dicomPath,dicomName));
+command = horzcat('dcm2niix -s y -f %s_%r -o ',newNiftiPath,' ',fullfile(dicomPath,dicomName));
     [status,cmdout] = system(command);
 if status ~= 0
     error('Could not convert dicom to nifti. Perhaps dcm2niix is not installed?\n %s',cmdout);

@@ -62,7 +62,8 @@ while ~isNewDicom
     elseif length(newDir) > initialDirSize
         missedDicomNumber = length(newDir) - initialDirSize;
         initialDirSize = length(newDir);
-        newDicoms = newDir(end + 1 - missedDicomNumber:end); 
+        % newDicoms = newDir(end + 1 - missedDicomNumber:end); 
+        newDicoms = newDir(2);
         isNewDicom = true;
         fprintf('\nNew DICOM found');
 
@@ -73,7 +74,7 @@ while ~isNewDicom
     % scannerFunction, and return the signal in the ROI (roiSignal) and a timestamp (dataTimePoint).
     % Each loop will also save the dicomName.
 
-        tic
+        % tic
         for j = 1:length(newDicoms)
         %for j = 1:length(newDicoms)
             thisDicomName = newDicoms(j).name;
@@ -85,8 +86,7 @@ while ~isNewDicom
 
             dicomNames{j} = thisDicomName;
         end
-        toc
-
+        % toc
     end
 end
 
