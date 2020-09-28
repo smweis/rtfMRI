@@ -62,11 +62,29 @@ while ~isNewDicom
     elseif length(newDir) > initialDirSize
         missedDicomNumber = length(newDir) - initialDirSize;
         initialDirSize = length(newDir);
-        % newDicoms = newDir(end + 1 - missedDicomNumber:end); 
-        newDicoms = newDir(2);
+        % newDicoms = newDir(end + 1 - missedDicomNumber:end);
+        newDicoms = newDir(2:2+missedDicomNumber-1);
         isNewDicom = true;
-        fprintf('\nNew DICOM found');
-
+        fprintf('New DICOM found\n');
+        
+        % Wait for file transfer to complete
+%         fileWait = true;
+%         fileConfirm = false;
+%         initialFileSize = newDicoms(1).bytes;
+%         while fileWait && ~fileConfirm
+%             disp(initialFileSize)
+%             pause(0.2);
+%             newFileSize = dir(strcat(scannerPath,filesep,newDicoms(1).name)).bytes;
+%             if newFileSize == initialFileSize
+%                 if fileWait
+%                     fileWait = false;
+%                 else
+%                     fileConfirm = true;
+%                 end
+%             else
+%                 initialFileSize = newFileSize;
+%             end
+%         end
 
     % Process the DICOMs into NIFTIs in a parallel computing loop.
     % For each new DICOM, dicomToNiftiAndWorkspace will save it as a NIFTI in the
@@ -75,12 +93,22 @@ while ~isNewDicom
     % Each loop will also save the dicomName.
 
         % tic
-        for j = 1:length(newDicoms)
+        for j = length(newDicoms):-1:1
         %for j = 1:length(newDicoms)
             thisDicomName = newDicoms(j).name;
             thisDicomPath = newDir(j).folder;
-
-            targetIm = dicomToNiftiAndWorkspace(thisDicomName,thisDicomPath,scratchPath);
+            
+            conversion = false;
+            while ~conversion
+                try
+                    targetIm = dicomToNiftiAndWorkspace(thisDicomName,thisDicomPath,scratchPath);
+                    conversion = true;
+                    fprintf("Conversion successful\n\n");
+                catch
+                    fprintf("DICOM to NIFTI conversion failed. Retrying...\n");
+                    pause(0.05);
+                end
+            end
 
             [roiSignal(j),dataTimepoint(j)] = scannerFunction(targetIm,roiIndex);
 

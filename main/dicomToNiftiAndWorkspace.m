@@ -20,6 +20,7 @@ if status ~= 0
     error('Could not convert dicom to nifti. Perhaps dcm2niix is not installed?\n %s',cmdout);
 end
 
+disp(cmdout)
 % Parse output of NIFTI conversion and extract new filename
 pattern = regexp(cmdout, strcat(newNiftiPath, '/.*'), 'match');
 tokens = regexp(pattern{1}, '\s', 'split');
