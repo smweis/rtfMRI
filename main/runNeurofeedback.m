@@ -1,4 +1,4 @@
-function [mainData,firstTriggerTime] = runNeurofeedback(subject,run,atScanner,varargin)
+function [mainData,firstTriggerTime] = runNeurofeedback(subject,run,atScanner,minfileSize,varargin)
 
 % The main function for the real-time fMRI pipeline on the scanner.
 %
@@ -16,6 +16,8 @@ function [mainData,firstTriggerTime] = runNeurofeedback(subject,run,atScanner,va
 %                           generate a folder with the string 'run' before
 %                           it.
 %   atScanner             - Logical. Are you actually at the scanner?
+%
+%   minFileSize           - Integer. The minimum size for a DICOM file in bytes. 
 
 % Optional key/value pairs:
 %  'sbref'                - String. If included, the path to the sbref
@@ -49,10 +51,11 @@ function [mainData,firstTriggerTime] = runNeurofeedback(subject,run,atScanner,va
 subject = 'TOME_3021_rtMockScanner';
 run = '1';
 atScanner = false;
+minfileSize = 1950000;
 sbref = '';
 showFig = true;
 checkForTrigger = false;
-mainData = runNeurofeedback(subject,run,atScanner,'sbref',sbref,'showFig',showFig,'checkForTrigger',checkForTrigger);
+mainData = runNeurofeedback(subject,run,atScanner,minfileSize,'sbref',sbref,'showFig',showFig,'checkForTrigger',checkForTrigger);
 
 % 2. Sanity check.
 subject = 'Ozzy_Test';
@@ -176,6 +179,7 @@ fprintf('Starting real-time processing sequence. To stop press CTRL+C.');
 i = 0;
 j = 1;
 
+prevData = load('/blue/stevenweisberg/rtQuest/TOME_3021_rtMockScanner/raw/prevData.mat');
 
 while i < 10000000000
 
@@ -188,11 +192,16 @@ while i < 10000000000
     % just takes the mean of all voxels in the ROI.
     [mainData(j).acqTime,mainData(j).dataTimepoint,mainData(j).roiSignal,...
      initialDirSize, mainData(j).dicomName] = ...
-     checkForNewDicom(scannerPath,roiIndex,initialDirSize,scratchPath);
+     checkForNewDicom(scannerPath,roiIndex,initialDirSize,scratchPath,minfileSize);
 
 
     % Vectorize data for plotting
     dataPlot(end+1:end+length(mainData(j).roiSignal)) = mainData(j).roiSignal;
+    if mainData(j).roiSignal ~= prevData.mainData(j).roiSignal
+        disp(mainData(j).roiSignal);
+        disp(prevData.mainData(j).roiSignal);
+        error('Mismatched values');
+    end
 
     % Simple line plot.
     plot(dataPlot,'black');
