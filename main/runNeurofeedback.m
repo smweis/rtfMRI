@@ -1,4 +1,4 @@
-function [mainData,firstTriggerTime] = runNeurofeedback(subject,run,atScanner,minfileSize,varargin)
+function [mainData,firstTriggerTime] = runNeurofeedback(subject,run,atScanner,varargin)
 
 % The main function for the real-time fMRI pipeline on the scanner.
 %
@@ -16,8 +16,6 @@ function [mainData,firstTriggerTime] = runNeurofeedback(subject,run,atScanner,mi
 %                           generate a folder with the string 'run' before
 %                           it.
 %   atScanner             - Logical. Are you actually at the scanner?
-%
-%   minFileSize           - Integer. The minimum size for a DICOM file in bytes. 
 
 % Optional key/value pairs:
 %  'sbref'                - String. If included, the path to the sbref
@@ -27,6 +25,8 @@ function [mainData,firstTriggerTime] = runNeurofeedback(subject,run,atScanner,mi
 %                           mean results.
 %  'checkForTrigger'      - Logical. If true, will wait for a trigger ('t').
 %
+%  'minFileSize'          - Integer. The minimum size for a DICOM file in bytes. 
+
 % Outputs:
 %   mainData              - Struct. Contains the main processed fMRI data
 %                           as well as time stamps.
@@ -51,11 +51,11 @@ function [mainData,firstTriggerTime] = runNeurofeedback(subject,run,atScanner,mi
 subject = 'TOME_3021_rtMockScanner';
 run = '1';
 atScanner = false;
-minfileSize = 1950000;
 sbref = '';
 showFig = true;
 checkForTrigger = false;
-mainData = runNeurofeedback(subject,run,atScanner,minfileSize,'sbref',sbref,'showFig',showFig,'checkForTrigger',checkForTrigger);
+minFileSize = 1950000;
+mainData = runNeurofeedback(subject,run,atScanner,'sbref',sbref,'showFig',showFig,'checkForTrigger',checkForTrigger,'minFileSize',minFileSize);
 
 % 2. Sanity check.
 subject = 'Ozzy_Test';
@@ -90,11 +90,15 @@ p.addRequired('atScanner',@islogical);
 p.addParameter('sbref', '', @isstr);
 p.addParameter('showFig', true, @islogical);
 p.addParameter('checkForTrigger', true, @islogical);
+p.addParameter('minFileSize',1950000,@isnumeric);
 
 % Parse
 p.parse( subject, run, atScanner, varargin{:});
 
-
+% Check to see if a minimum file size was not given
+if any(strcmp(p.UsingDefaults, 'minFileSize'))
+    warning('The minimum file size was set by default to: 1950000 bytes. Verify that this file size is sufficiently close to your actual DICOM file size');
+end
 
 
 %% Get Relevant Paths
@@ -179,7 +183,7 @@ fprintf('Starting real-time processing sequence. To stop press CTRL+C.');
 i = 0;
 j = 1;
 
-prevData = load('/blue/stevenweisberg/rtQuest/TOME_3021_rtMockScanner/raw/prevData.mat');
+% prevData = load('/blue/stevenweisberg/rtQuest/TOME_3021_rtMockScanner/raw/prevData.mat');
 
 while i < 10000000000
 
@@ -192,23 +196,23 @@ while i < 10000000000
     % just takes the mean of all voxels in the ROI.
     [mainData(j).acqTime,mainData(j).dataTimepoint,mainData(j).roiSignal,...
      initialDirSize, mainData(j).dicomName] = ...
-     checkForNewDicom(scannerPath,roiIndex,initialDirSize,scratchPath,minfileSize);
+     checkForNewDicom(scannerPath,roiIndex,initialDirSize,scratchPath,p.Results.minFileSize);
 
 
     % Vectorize data for plotting
     dataPlot(end+1:end+length(mainData(j).roiSignal)) = mainData(j).roiSignal;
-    if mainData(j).roiSignal ~= prevData.mainData(j).roiSignal
-        disp(mainData(j).roiSignal);
-        disp(prevData.mainData(j).roiSignal);
-        error('Mismatched values');
-    end
+    
+%     if mainData(j).roiSignal ~= prevData.mainData(j).roiSignal
+%         disp(mainData(j).roiSignal);
+%         disp(prevData.mainData(j).roiSignal);
+%         error('Mismatched values');
+%     end
 
     % Simple line plot.
     plot(dataPlot,'black');
 
     % Write out a file to the run directory each time a new mainData struct is written.
     save(fullfile(runPath,'mainData'),'mainData');
-
 
     j = j + 1;
 

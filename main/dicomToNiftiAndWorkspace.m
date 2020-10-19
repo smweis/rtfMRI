@@ -18,19 +18,16 @@ if status ~= 0
     error('Could not convert dicom to nifti. Perhaps dcm2niix is not installed?\n %s',cmdout);
 end
 
-% Parse output of NIFTI conversion and extract new filename
+% Parse output of NIFTI conversion to extract filename
 pattern = regexp(cmdout, strcat(newNiftiPath, '/.*'), 'match');
 tokens = regexp(pattern{1}, '\s', 'split');
 % filePath = regexp(tokens{1}, '/', 'split');
 filePath = tokens{1};
 
-
 % Load nifti into MATLAB
-newNiftiName = dir(strcat(filePath,'*.nii'));
-newNiftiName = fullfile(newNiftiPath,newNiftiName.name);
+newNiftiName = strcat(filePath,'.nii');
 targetNifti = niftiinfo(newNiftiName);
 targetIm = niftiread(targetNifti);
 disp(newNiftiName);
-
 
 end

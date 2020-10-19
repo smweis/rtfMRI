@@ -62,7 +62,6 @@ while ~isNewDicom
     elseif length(newDir) > initialDirSize
         missedDicomNumber = length(newDir) - initialDirSize;
         initialDirSize = length(newDir);
-        % newDicoms = newDir(end + 1 - missedDicomNumber:end);
         newDicoms = newDir(2:2+missedDicomNumber-1);
         isNewDicom = true;
         fprintf('New DICOM found\n');
@@ -71,9 +70,11 @@ while ~isNewDicom
         fileWait = true;
         initialFileSize = newDicoms(1).bytes;
         while fileWait
-            disp(initialFileSize)
             pause(0.2);
             newFileSize = dir(strcat(scannerPath,filesep,newDicoms(1).name)).bytes;
+            
+            % If no new bytes have been written AND file size is over
+            % threshold, then we say that the file transfer has finished
             if newFileSize == initialFileSize && newFileSize > minfileSize
                 fileWait = false;
             else
@@ -87,27 +88,14 @@ while ~isNewDicom
     % scannerFunction, and return the signal in the ROI (roiSignal) and a timestamp (dataTimePoint).
     % Each loop will also save the dicomName.
     
-        % newDicoms is in ascending order according to DICOM age
+        % Note: newDicoms is in ascending order according to DICOM age
         for j = length(newDicoms):-1:1
-        %for j = 1:length(newDicoms)
             thisDicomName = newDicoms(j).name;
             thisDicomPath = newDir(j).folder;
             
-            conversion = false;
-            while ~conversion
-                try
-                    targetIm = dicomToNiftiAndWorkspace(thisDicomName,thisDicomPath,scratchPath);
-                    fprintf("Conversion successful\n\n");
-                    conversion = true;
-                    [roiSignal(j),dataTimepoint(j)] = scannerFunction(targetIm,roiIndex);
-                    dicomNames{j} = thisDicomName;
-                catch
-                    fprintf("DICOM to NIFTI conversion failed.");
-                    pause(0.1);
-                end
-            end
-%             targetIm = dicomToNiftiAndWorkspace(thisDicomName,thisDicomPath,scratchPath);
-
+            targetIm = dicomToNiftiAndWorkspace(thisDicomName,thisDicomPath,scratchPath);
+            [roiSignal(j),dataTimepoint(j)] = scannerFunction(targetIm,roiIndex);
+            dicomNames{j} = thisDicomName;
         end
 
     end
