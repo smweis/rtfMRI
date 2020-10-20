@@ -1,11 +1,11 @@
-function [acqTime,dataTimepoint,roiSignal,initialDirSize,dicomNames] = checkForNewDicom(scannerPath,roiIndex,initialDirSize,scratchPath,minfileSize)
+function [acqTime,dataTimepoint,roiSignal,initialDirSize,dicomNames] = checkForNewDicom(scannerPath,roiIndex,initialDirSize,scratchPath,minFileSize)
 % Check scanner path for new DICOM(s)
 
 %% To do 
 % Add scannerFunction anonymous function handle as a required input
 %
 % Syntax:
-%  [acqTime,dataTimepoint,roiSignal,initialDirSize,dicomNames] = checkForNewDicom(scannerPath,roiIndex,initialDirSize,scratchPath)
+%  [acqTime,dataTimepoint,roiSignal,initialDirSize,dicomNames] = checkForNewDicom(scannerPath,roiIndex,initialDirSize,scratchPath,minFileSize)
 
 % Description:
 %  This function will check a scannerPath for new DICOMs. It does so by
@@ -31,6 +31,7 @@ function [acqTime,dataTimepoint,roiSignal,initialDirSize,dicomNames] = checkForN
 %                           first called.
 %
 %   scratchPath           - path to a scratch directory on the local computer.
+%   minFileSize           - minimum DICOM file size in bytes
 % Outputs:
 %   acqTime               - time at which checkForNewDicom detected a new DICOM
 %   dataTimePoint         - time after scannerFunction completed its computation.
@@ -75,18 +76,18 @@ while ~isNewDicom
             
             % If no new bytes have been written AND file size is over
             % threshold, then we say that the file transfer has finished
-            if newFileSize == initialFileSize && newFileSize > minfileSize
+            if newFileSize == initialFileSize && newFileSize > minFileSize
                 fileWait = false;
             else
                 initialFileSize = newFileSize;
             end
         end
 
-    % Process the DICOMs into NIFTIs in a parallel computing loop.
-    % For each new DICOM, dicomToNiftiAndWorkspace will save it as a NIFTI in the
-    % scratchPath and as a targetIm in the workspace. Then it will computed
-    % scannerFunction, and return the signal in the ROI (roiSignal) and a timestamp (dataTimePoint).
-    % Each loop will also save the dicomName.
+        % Process the DICOMs into NIFTIs in a parallel computing loop.
+        % For each new DICOM, dicomToNiftiAndWorkspace will save it as a NIFTI in the
+        % scratchPath and as a targetIm in the workspace. Then it will computed
+        % scannerFunction, and return the signal in the ROI (roiSignal) and a timestamp (dataTimePoint).
+        % Each loop will also save the dicomName.
     
         % Note: newDicoms is in ascending order according to DICOM age
         for j = length(newDicoms):-1:1
