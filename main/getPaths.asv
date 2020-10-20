@@ -14,8 +14,6 @@ mkdir(scratchPath);
 
 % Path to the repository. 
 projectDir = getpref('neurofeedback','projectRootDir');
-
-% Path to source code
-codePath = getpref('neurofeedback','codePath');
+% codePath = [codePath filesep 'code'];
 
 end
