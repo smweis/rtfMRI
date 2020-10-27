@@ -143,10 +143,10 @@ else
         firstTriggerTime = waitForTrigger;
     end
 
-    [ap_or_pa,initialDirSize] = registerToFirstDicom(subject,subjectPath,run,scannerPath,codePath);
+    [ap_or_pa,initialDirSize,scoutNifti] = registerToFirstDicom(subject,subjectPath,run,scannerPath,codePath);
 end
 
-
+scoutNifti = [subjectPath filesep 'processed' filesep 'run' run filesep scoutNifti];
 
 
 %% Load the ROI
@@ -196,7 +196,7 @@ while i < 10000000000
     % just takes the mean of all voxels in the ROI.
     [mainData(j).acqTime,mainData(j).dataTimepoint,mainData(j).roiSignal,...
      initialDirSize, mainData(j).dicomName] = ...
-     checkForNewDicom(scannerPath,roiIndex,initialDirSize,scratchPath,p.Results.minFileSize);
+     checkForNewDicom(scannerPath,roiIndex,initialDirSize,scratchPath,p.Results.minFileSize,scoutNifti,runPath,ap_or_pa,subjectPath);
 
 
     % Vectorize data for plotting
