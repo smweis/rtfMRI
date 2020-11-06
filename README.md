@@ -14,7 +14,7 @@
   - Git Bash
   - Other SSH client
 2. Type into the HiPerGator client the following commands in order:
-  - ml fsl mricrogl
+  - ml fsl mricrogl afni
   - ml matlab
   - matlab
 3. Make a folder in your home directory
@@ -25,7 +25,7 @@
 6. **IF SIMULATING**
   - Go back to HiPerGator
   - put in this directory:
-    - /blue/stevenweisberg/rtQuest/TOME_3021_rtMockScanner/simulatedScannerDirectory
+    - [PATH TO DATA], e.g., /blue/stevenweisberg/rtQuest/TOME_3021_rtMockScanner/simulatedScannerDirectory
   - Remove all previous run folders
   - go back to MATLAB
     - run NeuroFeedback with desired specs (examples are in the code)
