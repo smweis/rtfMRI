@@ -26,6 +26,8 @@ function [mainData,firstTriggerTime] = runNeurofeedback(subject,run,atScanner,va
 %  'checkForTrigger'      - Logical. If true, will wait for a trigger ('t').
 %
 %  'minFileSize'          - Integer. The minimum size for a DICOM file in bytes. 
+%
+%  'TR'                   - Integer. MR seconds per sample
 
 % Outputs:
 %   mainData              - Struct. Contains the main processed fMRI data
@@ -55,7 +57,8 @@ sbref = '';
 showFig = true;
 checkForTrigger = false;
 minFileSize = 1950000;
-mainData = runNeurofeedback(subject,run,atScanner,'sbref',sbref,'showFig',showFig,'checkForTrigger',checkForTrigger,'minFileSize',minFileSize);
+TR = 800;
+mainData = runNeurofeedback(subject,run,atScanner,'sbref',sbref,'showFig',showFig,'checkForTrigger',checkForTrigger,'minFileSize',minFileSize, 'TR', TR);
 
 % 2. Sanity check.
 subject = 'Ozzy_Test';
@@ -91,6 +94,7 @@ p.addParameter('sbref', '', @isstr);
 p.addParameter('showFig', true, @islogical);
 p.addParameter('checkForTrigger', true, @islogical);
 p.addParameter('minFileSize',1950000,@isnumeric);
+p.addParameter('TR',0.8,@isnumeric);
 
 % Parse
 p.parse( subject, run, atScanner, varargin{:});
@@ -100,7 +104,10 @@ if any(strcmp(p.UsingDefaults, 'minFileSize'))
     warning('The minimum file size was set by default to: 1950000 bytes. Verify that this file size is sufficiently close to your actual DICOM file size');
 end
 
-
+% Check to see if a TR was not given
+if any(strcmp(p.UsingDefaults, 'TR'))
+    warning('The TR was set by default to: 0.8s. Verify that this TR is equivalent to your specifications.');
+end
 %% Get Relevant Paths
 
 [subjectPath, scannerPathStem, codePath, scratchPath] = getPaths(subject);
@@ -199,8 +206,13 @@ while i < 10000000000
      checkForNewDicom(scannerPath,roiIndex,initialDirSize,scratchPath,p.Results.minFileSize,scoutNifti,runPath,ap_or_pa,subjectPath);
 
 
-    % Vectorize data for plotting
-    dataPlot(end+1:end+length(mainData(j).roiSignal)) = mainData(j).roiSignal;
+    % Vectorize data
+    dataPlot = [mainData.roiSignal];
+    dataPlot = dataPlot - mean(dataPlot);
+    dataPlot = detrend(dataPlot);
+%     if size(dataPlot) >= 6
+%         dataPlot = highpass(dataPlot,0.01,1/p.Results.TR);
+%     end
     
 %     if mainData(j).roiSignal ~= prevData.mainData(j).roiSignal
 %         disp(mainData(j).roiSignal);
@@ -209,7 +221,8 @@ while i < 10000000000
 %     end
 
     % Simple line plot.
-    plot(dataPlot,'black');
+    cla reset;
+    plot(dataPlot,'.');
 
     % Write out a file to the run directory each time a new mainData struct is written.
     save(fullfile(runPath,'mainData'),'mainData');
