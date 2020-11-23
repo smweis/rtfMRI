@@ -1,4 +1,4 @@
-function [apOrPa,dirLengthAfterRegistration] = registerToFirstDicom(subject,subjectPath,run,scannerPath,codePath,varargin)
+function [apOrPa,dirLengthAfterRegistration,old_dicom_name] = registerToFirstDicom(subject,subjectPath,run,scannerPath,codePath,varargin)
 % Register to the real time fmri sequence
 %
 %
