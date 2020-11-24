@@ -1,4 +1,4 @@
-function [acqTime,dataTimepoint,roiSignal,initialDirSize,dicomNames] = checkForNewDicom(scannerPath,roiIndex,initialDirSize,scratchPath,minFileSize,scoutNifti,runPath,ap_or_pa,subjectPath)
+function [acqTime,dataTimepoint,roiSignal,initialDirSize,dicomNames] = checkForNewDicom(scannerPath,roiIndex,initialDirSize,scratchPath,minFileSize,scoutNifti)
 % Check scanner path for new DICOM(s)
 
 %% To do 
@@ -94,7 +94,7 @@ while ~isNewDicom
             thisDicomName = newDicoms(j).name;
             thisDicomPath = newDir(j).folder;
             
-            targetIm = dicomToNiftiAndWorkspace(thisDicomName,thisDicomPath,scratchPath,scoutNifti,runPath,ap_or_pa,subjectPath);
+            targetIm = dicomToNiftiAndWorkspace(thisDicomName,thisDicomPath,scratchPath,scoutNifti);
             [roiSignal(j),dataTimepoint(j)] = scannerFunction(targetIm,roiIndex);
             dicomNames{j} = thisDicomName;
         end
