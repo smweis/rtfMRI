@@ -198,19 +198,10 @@ while i < 10000000000
      checkForNewDicom(scannerPath,roiIndex,initialDirSize,scratchPath,p.Results.minFileSize,scoutNifti);
 
 
-    % Vectorize data
+    % Vectorize, detrend, and mean-center data
     dataPlot = [mainData.roiSignal];
-    dataPlot = dataPlot - mean(dataPlot);
+    dataPlot = (dataPlot - mean(dataPlot))./std(dataPlot);
     dataPlot = detrend(dataPlot);
-%     if size(dataPlot) >= 6
-%         dataPlot = highpass(dataPlot,0.01,1/p.Results.TR);
-%     end
-    
-%     if mainData(j).roiSignal ~= prevData.mainData(j).roiSignal
-%         disp(mainData(j).roiSignal);
-%         disp(prevData.mainData(j).roiSignal);
-%         error('Mismatched values');
-%     end
 
     % Simple line plot.
     cla reset;
@@ -218,6 +209,7 @@ while i < 10000000000
 
     % Write out a file to the run directory each time a new mainData struct is written.
     save(fullfile(runPath,'mainData'),'mainData');
+    writematrix(dataPlot,fullfile(runPath,'dataPlot.txt'));
 
     j = j + 1;
 
