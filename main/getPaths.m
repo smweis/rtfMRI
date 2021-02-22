@@ -11,7 +11,7 @@ subjectPath = [subjectPath filesep subject];
 % Path to the scratch directory for saving NIFTIs temporarily and locally.
 scratchPath = getpref(projectName, 'analysisScratchDir');
 
-% Path to the repository. 
+% Path to the repository.
 projectRootPath = getpref(projectName,'projectRootDir');
 
 codePath = fullfile(projectRootPath','..','toolboxes','rtfmri');

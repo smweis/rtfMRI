@@ -102,7 +102,6 @@ if any(strcmp(p.UsingDefaults, 'minFileSize'))
     warning('The minimum file size was set by default to: 1950000 bytes. Verify that this file size is sufficiently close to your actual DICOM file size');
 end
 
-
 %% Get Relevant Paths
 
 [subjectPath, scannerPathStem, codePath, scratchPath] = getPaths(subject,p.Results.projectName);
@@ -145,10 +144,10 @@ else
         firstTriggerTime = waitForTrigger;
     end
 
-    [ap_or_pa,initialDirSize] = registerToFirstDicom(subject,subjectPath,run,scannerPath,codePath);
+    [ap_or_pa,initialDirSize,scoutNifti] = registerToFirstDicom(subject,subjectPath,run,scannerPath,codePath);
 end
 
-
+scoutNifti = [subjectPath filesep 'processed' filesep 'run' run filesep scoutNifti];
 
 
 %% Load the ROI
@@ -198,23 +197,21 @@ while i < 10000000000
     % just takes the mean of all voxels in the ROI.
     [mainData(j).acqTime,mainData(j).dataTimepoint,mainData(j).roiSignal,...
      initialDirSize, mainData(j).dicomName] = ...
-     checkForNewDicom(scannerPath,roiIndex,initialDirSize,scratchPath,p.Results.minFileSize);
+     checkForNewDicom(scannerPath,roiIndex,initialDirSize,scratchPath,p.Results.minFileSize,scoutNifti);
 
 
-    % Vectorize data for plotting
-    dataPlot(end+1:end+length(mainData(j).roiSignal)) = mainData(j).roiSignal;
-    
-%     if mainData(j).roiSignal ~= prevData.mainData(j).roiSignal
-%         disp(mainData(j).roiSignal);
-%         disp(prevData.mainData(j).roiSignal);
-%         error('Mismatched values');
-%     end
+    % Vectorize, detrend, and mean-center data
+    dataPlot = [mainData.roiSignal];
+    dataPlot = (dataPlot - mean(dataPlot))./std(dataPlot);
+    dataPlot = detrend(dataPlot);
 
     % Simple line plot.
-    plot(dataPlot,'black');
+    cla reset;
+    plot(dataPlot,'.');
 
     % Write out a file to the run directory each time a new mainData struct is written.
     save(fullfile(runPath,'mainData'),'mainData');
+    writematrix(dataPlot,fullfile(runPath,'dataPlot.txt'));
 
     j = j + 1;
 

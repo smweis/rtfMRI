@@ -1,4 +1,4 @@
-function [acqTime,dataTimepoint,roiSignal,initialDirSize,dicomNames] = checkForNewDicom(scannerPath,roiIndex,initialDirSize,scratchPath,minFileSize)
+function [acqTime,dataTimepoint,roiSignal,initialDirSize,dicomNames] = checkForNewDicom(scannerPath,roiIndex,initialDirSize,scratchPath,minFileSize,scoutNifti)
 % Check scanner path for new DICOM(s)
 
 %% To do 
@@ -88,17 +88,17 @@ while ~isNewDicom
         % scratchPath and as a targetIm in the workspace. Then it will computed
         % scannerFunction, and return the signal in the ROI (roiSignal) and a timestamp (dataTimePoint).
         % Each loop will also save the dicomName.
-    
+        tic;
         % Note: newDicoms is in ascending order according to DICOM age
         for j = length(newDicoms):-1:1
             thisDicomName = newDicoms(j).name;
             thisDicomPath = newDir(j).folder;
             
-            targetIm = dicomToNiftiAndWorkspace(thisDicomName,thisDicomPath,scratchPath);
+            targetIm = dicomToNiftiAndWorkspace(thisDicomName,thisDicomPath,scratchPath,scoutNifti);
             [roiSignal(j),dataTimepoint(j)] = scannerFunction(targetIm,roiIndex);
             dicomNames{j} = thisDicomName;
         end
-
+        toc;
     end
 end
 
