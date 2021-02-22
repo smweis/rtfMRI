@@ -26,6 +26,8 @@ function [mainData,firstTriggerTime] = runNeurofeedback(subject,run,atScanner,va
 %  'checkForTrigger'      - Logical. If true, will wait for a trigger ('t').
 %
 %  'minFileSize'          - Integer. The minimum size for a DICOM file in bytes. 
+%  'projectName'          - String. Name of project. Default =
+%                           'neurofeedback'
 
 % Outputs:
 %   mainData              - Struct. Contains the main processed fMRI data
@@ -45,8 +47,7 @@ function [mainData,firstTriggerTime] = runNeurofeedback(subject,run,atScanner,va
 % notified that the script is waiting for registration, copy and paste the
 % 'FakeFirstDICOM0000001.dcm' file from [subject]/run1_toCopy/ to [subject]/run1
 % After registration, copy and paste a set of dicoms from that same pair of
-% directories. 
-
+% directories.
 
 subject = 'TOME_3021_rtMockScanner';
 run = '1';
@@ -91,6 +92,7 @@ p.addParameter('sbref', '', @isstr);
 p.addParameter('showFig', true, @islogical);
 p.addParameter('checkForTrigger', true, @islogical);
 p.addParameter('minFileSize',1950000,@isnumeric);
+p.addParameter('projectName','neurofeedback',@isstr);
 
 % Parse
 p.parse( subject, run, atScanner, varargin{:});
@@ -103,7 +105,7 @@ end
 
 %% Get Relevant Paths
 
-[subjectPath, scannerPathStem, codePath, scratchPath] = getPaths(subject);
+[subjectPath, scannerPathStem, codePath, scratchPath] = getPaths(subject,p.Results.projectName);
 
 runPath = [subjectPath filesep 'processed' filesep 'run' run];
 
