@@ -6,7 +6,7 @@ scannerPath = getpref(projectName,'scannerBasePath');
 
 % Path to subject-relevant files (like their MPRAGE and scout images)
 subjectPath = getpref(projectName, 'currentSubjectBasePath');
-subjectPath = [subjectPath filesep 'rtQuest' filesep 'derivatives' filesep 'realTime' filesep subject];
+subjectPath = [subjectPath filesep 'derivatives' filesep 'realTime' filesep subject];
 
 % Path to the scratch directory for saving NIFTIs temporarily and locally.
 scratchPath = getpref(projectName, 'analysisScratchDir');
