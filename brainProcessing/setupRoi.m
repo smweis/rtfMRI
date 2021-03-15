@@ -1,4 +1,4 @@
-function setupRoi(roiName,subject,varargin)
+function setupRoi(roiName,subject,projectName,varargin)
 %setupRoi will take fmriprep pre-processed data and an ROI in a specified
 %space to preparing all data for the pre-real-time fMRI scan. 
 
@@ -22,11 +22,11 @@ p = inputParser;
 % Required input
 p.addRequired('roiName',@isstr);
 p.addRequired('subject',@isstr);
+p.addRequired('projetName',@isstr);
 
 % Optional params
 p.addParameter('fmriprep',true,@islogical);
 p.addParameter('space', 'MNI152NLin2009cAsym', @isstr);
-p.addParameter('projectName','neurofeedback',@isstr);
 
 % Parse
 p.parse( roiName,subject,projectName, varargin{:});
