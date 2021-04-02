@@ -1,12 +1,18 @@
-function [subjectPath, scannerPath, codePath, scratchPath] = getPaths(subject,projectName)
+function [bidsPath, scannerPath, codePath, scratchPath, subjectAnatPath, subjectProcessedPath] = getPaths(subject,projectName)
 % Get all relevant paths for experiment
 
 % Path where new DICOMs will come in.
 scannerPath = getpref(projectName,'scannerBasePath');
 
 % Path to subject-relevant files (like their MPRAGE and scout images)
-subjectPath = getpref(projectName, 'currentSubjectBasePath');
-subjectPath = [subjectPath filesep 'derivatives' filesep 'realTime' filesep subject];
+bidsPath = getpref(projectName, 'currentSubjectBasePath');
+subjectAnatPath = fullfile(bidsPath,'derivatives','fmriprep',subject,'anat');
+
+subjectProcessedPath = fullfile(bidsPath,'derivatives','realTime',subject);
+
+if ~isfolder(subjectProcessedPath)
+    mkdir(subjectProcessedPath)
+end
 
 % Path to the scratch directory for saving NIFTIs temporarily and locally.
 scratchPath = getpref(projectName, 'analysisScratchDir');

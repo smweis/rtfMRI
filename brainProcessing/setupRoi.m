@@ -1,20 +1,9 @@
-function setupRoi(roiName,subject,projectName,varargin)
-%setupRoi will take fmriprep pre-processed data and an ROI in a specified
+function setupRoi(roiName,subject,projectName,scoutEPIName,varargin)
+%setupRoi will take pre-processed data and an ROI in a specified
 %space to preparing all data for the pre-real-time fMRI scan. 
 
 % setupRoi will first register the ROI from its space to subject's EPI
 % space. 
-
-% To Do - add optional args for ROI name and space (MNI or other)
-% Check if fmriprep has been done. 
-
-
-% Minimally, we need: 
-
-% 1 - SCOUT MPRAGE in subject's space
-% 2 - SCOUT MPRAGE in MNI space
-% 3 - SCOUT EPI in MPRAGE space.
-% 4 
 
 %% Parse input
 p = inputParser;
@@ -22,81 +11,122 @@ p = inputParser;
 % Required input
 p.addRequired('roiName',@isstr);
 p.addRequired('subject',@isstr);
-p.addRequired('projetName',@isstr);
-
-% Optional params
-p.addParameter('fmriprep',true,@islogical);
-p.addParameter('space', 'MNI152NLin2009cAsym', @isstr);
+p.addRequired('projectName',@isstr);
+p.addRequired('scoutEPIName',@isstr);
 
 % Parse
-p.parse( roiName,subject,projectName, varargin{:});
+p.parse( roiName,subject,projectName,scoutEPIName,varargin{:});
 
-%% Load in ants and fsl
+%% Load in ants, fsl, mricron
 % If it's in subject's space, it should go to MNI space. 
 system('ml ants');
 system('ml fsl');
+system('ml mricron');
+system('ml afni');
 
-% Right now only fmriprep supported results for this script
-if ~p.Results.fmriprep
-    error('Run fmriprep first');
+% % Set up paths
+%[bidsPath, ~,~,~, subjectAnatPath, subjectProcessedPath] = getPaths(subject,projectName);
+% 
+% % Where is the scout MPRAGE data?
+% T1 = fullfile(subjectAnatPath,strcat(subject,'_desc-preproc_T1w.nii.gz'));
+% T1_brain_mask = fullfile(subjectAnatPath,strcat(subject,'_desc-brain_mask.nii.gz'));
+% 
+% MNI_anat = fullfile(subjectAnatPath,strcat(subject,'_space-',p.Results.space,'_desc-preproc_T1w.nii.gz'));
+% 
+% % The template and realTime data is separate               
+% roiTemplate = fullfile(bidsPath,'derivatives','templates',roiName);
+% 
+% 
+% % Mask brain
+% T1_masked = fullfile(subjectProcessedPath,'T1_masked.nii.gz');
+% command = sprintf('fslmaths %s -mul %s %s',T1,T1_brain_mask,T1_masked);
+% system(command);
+% 
+% % Register ROI to from MNI space to MPRAGE space.
+% transformMat = sprintf('%s_from-%s_to-T1w_mode-image_xfm.h5',subject,p.Results.space);
+% transformMat = fullfile(subjectAnatPath,transformMat);
+% 
+% % What to name the ROI?
+% roiT1 = sprintf('%s_%s.gz',subject,roiName);
+% roiT1 = fullfile(subjectProcessedPath,roiT1);
+% command = sprintf('antsApplyTransforms -i %s -t %s -o %s -r %s -v',...,
+%                    roiTemplate, transformMat, roiT1, MNI_anat);
+% system(command);
+% 
+% % View anatomical ROI. 
+% command=sprintf('mricron %s -o %s', T1_masked, roiT1);
+% system(command);
+% 
+% 
+
+
+
+% Where are all the files
+T1 = fullfile(subjectAnatPath,strcat(subject,'_desc-preproc_T1w.nii.gz'));
+T1_masked = fullfile(subjectProcessedPath,'T1_masked.nii.gz');
+scoutEPI = fullfile(subjectProcessedPath,'scoutEPI.nii.gz');
+scoutEPI_masked = fullfile(subjectProcessedPath,'scoutEPI_masked.nii.gz');
+MNI = fullfile(bidsPath,'derivatives','templates','MNI152lin_T1_1mm_brain.nii.gz');
+roiTemplate = fullfile(bidsPath,'derivatives','templates',roiName);
+roiEPI = fullfile(subjectProcessedPath,strcat('epi_',roiName));
+
+
+if ~isfile(T1_masked)
+    % Extract T1 brain
+    command = sprintf('bet %s %s -R', T1, T1_masked);
+    fprintf(command);
+    fprintf('\n');
+    system(command);
 end
 
-
-% Set up paths
-subjectPath = getPaths(subject,projectName);
-
-% Where is the scout data?
-T1path = fullfile(subjectPath,'derivatives',...,
-                'fmriprep',subject,'anat');
-
-T1 = strcat(subject,'_desc-preproc_T1w.nii.gz');
-T1 = fullfile(T1path,T1);
-T1_brain_mask = strcat(subject,'_desc-brain_mask.nii.gz');
-T1_brain_mask = fullfile(T1path,T1_brain_mask);
-
-% The template and realTime data is separate
-realTimePath = fullfile(subjectPath,'derivatives','realTime',subject);                
-roiTemplate = fullfile(realTimePath,'templates',roiName);
-
-
-% Mask brain
-T1_masked = fullfile(realTimePath,'T1_masked');
-command = sprintf('fslmaths %s -mul %s %s',T1,T1_brain_mask,T1_masked);
+command = sprintf('bet %s %s',scoutEPI, scoutEPI_masked);
 system(command);
 
-% Register ROI to from MNI space to MPRAGE space.
-transformMat = sprintf('%s_from-%s_to-T1w_mode-image_xfm.h5',subject,p.Results.space);
-transformMat = fullfile(T1path,transformMat);
-% What to name the ROI?
-roiTransformed = sprintf('%s_%s',subject,roi);
-roiTransformed = fullfile(realTimePath,roiTransformed);
-command = sprintf('antsApplytransforms -i %s -t %s -o %s -r %s -v',...,
-                   roiTemplate, transformMat, roiTransformed, T1);
+if ~isfile(sprintf('%s/anat2standard.mat',subjectProcessedPath))
+    % Calculate first registration matrix from MNI -> T1
+    command = sprintf('flirt -in %s -ref %s -omat %s/anat2standard.mat -bins 256 -cost corratio -searchrx -180 180 -searchry -180 180 -searchrz -180 180 -dof 12',T1_masked, MNI,subjectProcessedPath);
+    fprintf(command);
+    fprintf('\n');
+    system(command);
+end
+
+if ~isfile(sprintf('%s/coreg2anat.mat',subjectProcessedPath))
+    % Calculate second registration matrix from T1 -> scout EPI
+    command = sprintf('flirt -in %s -ref %s -omat %s/coreg2anat.mat -bins 256 -cost corratio -searchrx -180 180 -searchry -180 180 -searchrz -180 180 -dof 6',...,
+        scoutEPI_masked,T1_masked,subjectProcessedPath);
+    fprintf(command);
+    fprintf('\n');
+    system(command);
+end
+
+% Invert those matrices
+command = sprintf('convert_xfm -omat %s/standard2anat.mat -inverse %s/anat2standard.mat',subjectProcessedPath,subjectProcessedPath);
+system(command);
+command = sprintf('convert_xfm -omat %s/anat2coreg.mat -inverse %s/coreg2anat.mat',subjectProcessedPath,subjectProcessedPath);
 system(command);
 
-% Mask ROI
 
-% 
-% system(sprintf('flirt -in %s -ref %s -omat coreg2standard2%s.mat -bins 256 -cost corratio -searchrx -180 180 -searchry -180 180 -searchrz -180 180 -dof 6',SCOUT_SCAN,T1_masked,i{:}));
-%     
-%     
-% # concatenate these two registration matrices
-% convert_xfm -concat coreg2standard1.mat -omat coreg2standard"$i".mat coreg2standard2"$i".mat
-% 
-% 
-% # apply registration to kastner parcel(s)
-% flirt -in $templatedir/kastner_v1_10.nii -ref "$i"_first_volume.nii -out ROI_to_"$i".nii -applyxfm -init standard2coreg"$i".mat -interp trilinear 
-% 
-% 
-% #binarize mask
-% fslmaths ROI_to_"$i".nii -bin ROI_to_"$i"_bin.nii
-% 
-% done
-% 
-% 
-% # Spot check
-% fsleyes $outputdir/ROI_to_PA_bin.nii.gz
-% fsleyes $outputdir/ROI_to_AP_bin.nii.gz
+% Concatenate these two registration matrices
+command = sprintf('convert_xfm -omat %s/standard2coreg.mat -concat %s/standard2anat.mat  %s/anat2coreg.mat',subjectProcessedPath,subjectProcessedPath,subjectProcessedPath);
+fprintf(command);
+fprintf('\n');
+system(command);
+
+% Apply transform to ROI
+command = sprintf('flirt -in %s -ref %s -out %s -applyxfm -init %s/standard2coreg.mat -interp trilinear',roiTemplate,scoutEPI_masked,roiEPI,subjectProcessedPath); 
+fprintf(command);
+fprintf('\n');
+system(command);
+
+% Binarize mask
+command = sprintf('fslmaths %s -bin %s',roiEPI,roiEPI);
+fprintf(command);
+fprintf('\n');
+system(command);
+
+% Spot check
+system(sprintf('mricron %s -o %s',scoutEPI_masked,roiEPI));
+
 
 end
 
