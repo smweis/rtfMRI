@@ -20,6 +20,6 @@ scratchPath = getpref(projectName, 'analysisScratchDir');
 % Path to the repository.
 projectRootPath = getpref(projectName,'projectRootDir');
 
-codePath = fullfile(projectRootPath,'..','toolboxes','rtfmri');
+codePath = fullfile(projectRootPath,'..','..','toolboxes','rtfmri');
 
 end

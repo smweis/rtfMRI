@@ -1,9 +1,14 @@
-# This script will take MPRAGE and a run of functional data from a subject, and register a parcel to the first image. 
-# kastner_v1_10.nii is a parcel taken from Sabine Kastner's probablistic maps of retinotopic cortex. 
-# It is the left/right hemisphere combined ROI for V1 that has been thresholded at 10 participants. 
+#!/bin/bash
 
-# to run this from command line: 
-# bash register_ROI_to_APandPA.sh TOME_3040
+FSLDIR=/usr/local/fsl
+. ${FSLDIR}/etc/fslconf/fsl.sh
+PATH=${FSLDIR}/bin:${PATH}
+export FSLDIR PATH
+
+# This script will take MPRAGE and a run of functional data from a subject, and register a parcel to the first image.
+# kastner_v1_10.nii is a parcel taken from Sabine Kastner's probablistic maps of retinotopic cortex.
+# It is the left/right hemisphere combined ROI for V1 that has been thresholded at 10 participants.
+
 
 
 rawdir=/Users/nfuser/Documents/rtQuest/$1/raw;
@@ -35,7 +40,7 @@ convert_xfm -omat standard2coreg"$i".mat -inverse coreg2standard"$i".mat
 
 
 # apply registration to kastner parcel(s)
-flirt -in $templatedir/kastner_v1_10.nii -ref "$i"_first_volume.nii -out ROI_to_"$i".nii -applyxfm -init standard2coreg"$i".mat -interp trilinear 
+flirt -in $templatedir/kastner_v1_10.nii -ref "$i"_first_volume.nii -out ROI_to_"$i".nii -applyxfm -init standard2coreg"$i".mat -interp trilinear
 
 
 #binarize mask
@@ -47,7 +52,3 @@ done
 # Spot check
 fsleyes $outputdir/ROI_to_PA_bin.nii.gz
 fsleyes $outputdir/ROI_to_AP_bin.nii.gz
-
-
-
-

@@ -25,7 +25,7 @@ function [mainData,firstTriggerTime] = runNeurofeedback(subject,run,atScanner,va
 %                           mean results.
 %  'checkForTrigger'      - Logical. If true, will wait for a trigger ('t').
 %
-%  'minFileSize'          - Integer. The minimum size for a DICOM file in bytes. 
+%  'minFileSize'          - Integer. The minimum size for a DICOM file in bytes.
 %  'projectName'          - String. Name of project. Default =
 %                           'neurofeedback'
 
@@ -93,6 +93,7 @@ p.addParameter('showFig', true, @islogical);
 p.addParameter('checkForTrigger', true, @islogical);
 p.addParameter('minFileSize',1950000,@isnumeric);
 p.addParameter('projectName','neurofeedback',@isstr);
+p.addParameter('brainFileFormat','.nii',@isstr);
 
 % Parse
 p.parse( subject, run, atScanner, varargin{:});
@@ -110,7 +111,6 @@ runPath = [subjectPath filesep 'processed' filesep 'run' run];
 
 % If we're at the scanner, get the most recently created folder on the scanner path.
 if atScanner
-
     thisSessionPath = dir(scannerPathStem);
     thisSessionPathSorted = sortrows(struct2table(thisSessionPath),{'isdir','datenum'});
     scannerPath = strcat(table2cell(thisSessionPathSorted(end,'folder')), filesep, table2cell(thisSessionPathSorted(end,'name')));
@@ -128,7 +128,7 @@ end
 % If there is an sbref, register to that. Else register to first DICOM.
 if ~isempty(p.Results.sbref)
     sbrefFullPath = [subjectPath filesep p.Results.sbref];
-    [ap_or_pa,initialDirSize] = registerToFirstDicom(subject,subjectPath,run,scannerPath,codePath,'sbref',sbrefFullPath);
+    initialDirSize = registerToFirstDicom(subject,run,'sbref',sbrefFullPath,p.Results.brainFileFormat);
 
 
     if p.Results.checkForTrigger
@@ -138,14 +138,14 @@ if ~isempty(p.Results.sbref)
 
 % If we are registering to the first DICOM, then we want to wait for the
 % trigger first, then register.
-
 else
     if p.Results.checkForTrigger
         firstTriggerTime = waitForTrigger;
     end
 
-    [ap_or_pa,initialDirSize,scoutNifti] = registerToFirstDicom(subject,subjectPath,run,scannerPath,codePath);
+    [initialDirSize,scoutNifti] = registerToFirstDicom(subject,run,p.Results.brainFileFormat);
 end
+
 
 scoutNifti = [subjectPath filesep 'processed' filesep 'run' run filesep scoutNifti];
 
@@ -156,9 +156,9 @@ roiPath = [subjectPath filesep 'processed' filesep 'run' run filesep roiName];
 roiIndex = loadRoi(roiPath);
 
 %% Spot check and press any key to continue.
-cmd = ['fsleyes ', runPath,filesep,'new',ap_or_pa,'.nii.gz ',roiPath ' &'];
-system(cmd);
-fprintf('Check registration then press any key to continue.')
+cmd = ['fsleyes ', runPath,filesep,'new_epi.nii.gz ',roiPath ' &'];
+#system(cmd);
+fprintf('Check registration then press any key to continue.\n Open WSL and type %s', cmd);
 pause;
 
 %% Initialize figure

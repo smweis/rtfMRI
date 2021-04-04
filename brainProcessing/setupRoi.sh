@@ -6,13 +6,22 @@ PATH=${FSLDIR}/bin:${PATH}
 export FSLDIR PATH
 
 
-
 # Arguments:
 sub_dir=$1
-newEPI=$2
-scoutEPI_masked=$3
-roi_epi=$4
+t1=$2
+t1_masked=$3
+scout_epi=$4
+scout_epi_masked=$5
+mni=$6
+roi_template=$7
+roi_epi=$8
 
+
+
+# Brain extract t1 and scout EPI
+bet $t1 $t1_masked -R
+
+bet $scout_epi $scout_epi_masked -R
 
 
 # Calculate first registration between T1 and standard (MNI)
@@ -33,20 +42,3 @@ flirt -in $roi_template -ref $scout_epi_masked -out $roi_epi -applyxfm -init $su
 
 # Binarize mask
 fslmaths $roi_epi -bin $roi_epi
-
-
-newEPI_masked=${newEPI}_masked
-bet $newEPI ${newEPI}_masked -R
-
-##########################
-# registration
-##########################
-
-# register first volume of old functional scan to new functional scan
-flirt -in $newEPI_masked -ref $run_dir/${newNifti}_bet -omat $run_dir/new2old"$1".mat -bins 256 -cost corratio -searchrx -180 180 -searchry -180 180 -searchrz -180 180 -dof 6
-
-# apply registration to v1 parcel(s)
-flirt -in $subject_dir/ROI_to_"$1"_bin.nii.gz -ref $run_dir/${newNifti}_bet -out $run_dir/ROI_to_new"$1".nii.gz -applyxfm -init $run_dir/new2old"$1".mat -interp trilinear
-
-#binarize mask again
-fslmaths $run_dir/ROI_to_new"$1".nii.gz -bin $run_dir/ROI_to_new"$1"_bin.nii.gz
