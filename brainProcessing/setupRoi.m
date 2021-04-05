@@ -5,6 +5,13 @@ function setupRoi(roiName,subject,projectName,scoutEPIName,varargin)
 % setupRoi will first register the ROI from its space to subject's EPI
 % space.
 
+%% Example: 
+%{
+
+setupRoi('kastner_v1lh_10.nii','sub-102','neurofeedback','scoutEPI.nii');
+
+%}
+
 %% Parse input
 p = inputParser;
 
@@ -18,7 +25,7 @@ p.addRequired('scoutEPIName',@isstr);
 p.parse( roiName,subject,projectName,scoutEPIName,varargin{:});
 
 % % Set up paths
-[bidsPath, ~,codePath,~, subjectAnatPath, subjectProcessedPath] = getPaths(subject,projectName);
+[bidsPath, ~,codePath,~, ~, subjectProcessedPath] = getPaths(subject,projectName);
 
 
 % Where are all the files

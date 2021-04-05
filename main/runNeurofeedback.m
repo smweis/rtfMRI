@@ -89,6 +89,7 @@ p.addRequired('atScanner',@islogical);
 
 % Optional params
 p.addParameter('sbref', '', @isstr);
+p.addParameter('roiName','kastner_v1lh_10.nii.gz',@isstr);
 p.addParameter('showFig', true, @islogical);
 p.addParameter('checkForTrigger', true, @islogical);
 p.addParameter('minFileSize',1950000,@isnumeric);
@@ -105,9 +106,9 @@ end
 
 %% Get Relevant Paths
 
-[subjectPath, scannerPathStem, codePath, scratchPath] = getPaths(subject,p.Results.projectName);
+[~, scannerPathStem, ~, scratchPath, ~, subjectProcessedPath] = getPaths(subject,p.Results.projectName);
 
-runPath = [subjectPath filesep 'processed' filesep 'run' run];
+runPath = [subjectProcessedPath filesep  filesep 'processed' filesep 'run' run];
 
 % If we're at the scanner, get the most recently created folder on the scanner path.
 if atScanner
@@ -127,8 +128,7 @@ end
 
 % If there is an sbref, register to that. Else register to first DICOM.
 if ~isempty(p.Results.sbref)
-    sbrefFullPath = [subjectPath filesep p.Results.sbref];
-    initialDirSize = registerToFirstDicom(subject,run,'sbref',sbrefFullPath,p.Results.brainFileFormat);
+    [initialDirSize,roiEPIName,scoutNifti] = registerToFirstDicom(subject,run,scannerPath,'sbref',p.Results.sbref,'brainFileFormat',p.Results.brainFileFormat,'roiName',p.Results.roiName);
 
 
     if p.Results.checkForTrigger
@@ -143,23 +143,12 @@ else
         firstTriggerTime = waitForTrigger;
     end
 
-    [initialDirSize,scoutNifti] = registerToFirstDicom(subject,run,p.Results.brainFileFormat);
+    [initialDirSize,roiEPIName,scoutNifti] = registerToFirstDicom(subject,run,scannerPath,'brainFileFormat',p.Results.brainFileFormat,'roiName',p.Results.roiName);
 end
 
 
-scoutNifti = [subjectPath filesep 'processed' filesep 'run' run filesep scoutNifti];
-
-
 %% Load the ROI
-roiName = ['ROI_to_new',ap_or_pa,'_bin.nii.gz'];
-roiPath = [subjectPath filesep 'processed' filesep 'run' run filesep roiName];
-roiIndex = loadRoi(roiPath);
-
-%% Spot check and press any key to continue.
-cmd = ['fsleyes ', runPath,filesep,'new_epi.nii.gz ',roiPath ' &'];
-#system(cmd);
-fprintf('Check registration then press any key to continue.\n Open WSL and type %s', cmd);
-pause;
+roiIndex = loadRoi(fullfile(runPath, roiEPIName));
 
 %% Initialize figure
 if p.Results.showFig
@@ -197,7 +186,7 @@ while i < 10000000000
     % just takes the mean of all voxels in the ROI.
     [mainData(j).acqTime,mainData(j).dataTimepoint,mainData(j).roiSignal,...
      initialDirSize, mainData(j).dicomName] = ...
-     checkForNewDicom(scannerPath,roiIndex,initialDirSize,scratchPath,p.Results.minFileSize,scoutNifti);
+     checkForNewDicom(subject,run,scannerPath,roiIndex,initialDirSize,scratchPath,p.Results.minFileSize,scoutNifti);
 
 
     % Vectorize, detrend, and mean-center data

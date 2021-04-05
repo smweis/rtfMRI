@@ -1,4 +1,4 @@
-function [acqTime,dataTimepoint,roiSignal,initialDirSize,dicomNames] = checkForNewDicom(scannerPath,roiIndex,initialDirSize,scratchPath,minFileSize,scoutNifti)
+function [acqTime,dataTimepoint,roiSignal,initialDirSize,dicomNames] = checkForNewDicom(subject,run, scannerPath,roiIndex,initialDirSize,scratchPath,minFileSize,scoutNifti,varargin)
 % Check scanner path for new DICOM(s)
 
 %% To do 
@@ -43,6 +43,28 @@ function [acqTime,dataTimepoint,roiSignal,initialDirSize,dicomNames] = checkForN
 
 % Dependencies:
 %   scannerFunction, dicomToNiftiAndWorkspace
+%% Parse input
+p = inputParser;
+
+% Required input
+p.addRequired('subject');
+p.addRequired('run');
+p.addRequired('scannerPath',@isstr);
+p.addRequired('roiIndex');
+p.addRequired('initialDirSize');
+p.addRequired('scratchPath');
+p.addRequired('minFileSize');
+p.addRequired('scoutNifti');
+
+% Optional params
+p.addParameter('roiName','kastner_v1lh_10.nii.gz',@isstr);
+p.addParameter('sbref', '', @isstr);
+p.addParameter('projectName','neurofeedback',@isstr);
+p.addParameter('brainFileFormat','.nii',@isstr)
+
+% Parse
+p.parse(subject, run, scannerPath, roiIndex, initialDirSize, scratchPath, minFileSize, scoutNifti, varargin{:});
+
 
 isNewDicom = false;
 
@@ -51,7 +73,7 @@ while ~isNewDicom
     acqTime = datetime;
 
     % Check files in scannerPath.
-    newDir = dir(strcat(scannerPath,filesep,'*.dcm'));
+    newDir = dir(strcat(scannerPath,filesep,'*',p.Results.brainFileFormat,'*'));
 
     % If no new files, call the function again
     if length(newDir) == initialDirSize
@@ -65,7 +87,7 @@ while ~isNewDicom
         initialDirSize = length(newDir);
         newDicoms = newDir(2:2+missedDicomNumber-1);
         isNewDicom = true;
-        fprintf('New DICOM found\n');
+        fprintf('New file found\n');
         
         % Wait for file transfer to complete
         fileWait = true;
@@ -94,7 +116,7 @@ while ~isNewDicom
             thisDicomName = newDicoms(j).name;
             thisDicomPath = newDir(j).folder;
             
-            targetIm = dicomToNiftiAndWorkspace(thisDicomName,thisDicomPath,scratchPath,scoutNifti);
+            targetIm = dicomToNiftiAndWorkspace(subject,run,thisDicomName,thisDicomPath,scratchPath,scoutNifti);
             [roiSignal(j),dataTimepoint(j)] = scannerFunction(targetIm,roiIndex);
             dicomNames{j} = thisDicomName;
         end
