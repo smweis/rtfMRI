@@ -82,12 +82,11 @@ mainData = runNeurofeedback(subject,run,atScanner,'sbref',sbref,'showFig',showFi
 % run python drinDumper.py -s 10.15.208.156 -o C:\Users\jacob.frank\Documents\blue\share\rtfmri_incoming\sub-102\simulatedScannerDirectory\run1 
 subject = 'sub-102';
 run = '1';
-sbref = 'sbRef_RT-fMR_e1_d1.nii';
-atScanner = false;
+sbref = '';
+atScanner = true;
 showFig = true;
 checkForTrigger = true;
-minFileSize = 2900000;
-mainData = runNeurofeedback(subject,run,atScanner,'sbref',sbref,'showFig',showFig,'checkForTrigger',checkForTrigger,'minFileSize',minFileSize);
+mainData = runNeurofeedback(subject,run,atScanner,'sbref',sbref,'showFig',showFig,'checkForTrigger',checkForTrigger);
   
 %}
 
@@ -137,7 +136,7 @@ end
 
 
 %% Register to First DICOM or SBREF
-%{
+
 % If there is an sbref, register to that. Else register to first DICOM.
 if ~isempty(p.Results.sbref)
     [initialDirSize,roiEPIName,scoutNifti] = registerToFirstDicom(subject,run,scannerPath,'sbref',p.Results.sbref,'brainFileFormat',p.Results.brainFileFormat,'roiName',p.Results.roiName);
@@ -158,12 +157,8 @@ else
     [initialDirSize,roiEPIName,scoutNifti] = registerToFirstDicom(subject,run,scannerPath,'brainFileFormat',p.Results.brainFileFormat,'roiName',p.Results.roiName);
 end
 
-%}
-%% Load the ROI
 
-roiEPIName = strcat('epi_',p.Results.roiName);
-scoutNifti = strcat(runPath,filesep,'new_epi.nii.gz');
-initialDirSize = 1;
+%% Load the ROI
 roiIndex = loadRoi(fullfile(runPath, roiEPIName));
 
 %% Initialize figure

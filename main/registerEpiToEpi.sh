@@ -30,5 +30,3 @@ flirt -in $roi_template -ref $newEPI -out $roi_epi -applyxfm -init $run_dir/stan
 
 # Binarize mask
 fslmaths $roi_epi -bin $roi_epi
-
-
