@@ -90,6 +90,7 @@ minFileSize = 2900000;
 mainData = runNeurofeedback(subject,run,atScanner,'sbref',sbref,'showFig',showFig,'checkForTrigger',checkForTrigger,'minFileSize',minFileSize);
   
 %}
+debug = 0;
 
 %% Parse input
 p = inputParser;
@@ -108,6 +109,10 @@ p.addParameter('minFileSize',1950000,@isnumeric);
 p.addParameter('projectName','neurofeedback',@isstr);
 p.addParameter('brainFileFormat','.nii',@isstr);
 
+% if not in debug mode, generate parameters
+if ~debug
+    varargin = params();
+end
 % Parse
 p.parse( subject, run, atScanner, varargin{:});
 
