@@ -28,6 +28,7 @@ function [mainData,firstTriggerTime] = runNeurofeedback(subject,run,atScanner,va
 %  'minFileSize'          - Integer. The minimum size for a DICOM file in bytes.
 %  'projectName'          - String. Name of project. Default =
 %                           'neurofeedback'
+%  'brainFileFormat'      - String. The brain image filetype (.dcm or .nii)
 
 % Outputs:
 %   mainData              - Struct. Contains the main processed fMRI data
@@ -142,7 +143,7 @@ end
 
 
 %% Register to First DICOM or SBREF
-%{
+
 % If there is an sbref, register to that. Else register to first DICOM.
 if ~isempty(p.Results.sbref)
     [initialDirSize,roiEPIName,scoutNifti] = registerToFirstDicom(subject,run,scannerPath,'sbref',p.Results.sbref,'brainFileFormat',p.Results.brainFileFormat,'roiName',p.Results.roiName);
@@ -162,8 +163,6 @@ else
 
     [initialDirSize,roiEPIName,scoutNifti] = registerToFirstDicom(subject,run,scannerPath,'brainFileFormat',p.Results.brainFileFormat,'roiName',p.Results.roiName);
 end
-
-%}
 %% Load the ROI
 
 roiEPIName = strcat('epi_',p.Results.roiName);
@@ -209,7 +208,7 @@ while i < 10000000000
      initialDirSize, mainData(j).dicomName] = ...
      checkForNewDicom(subject,run,scannerPath,roiIndex,initialDirSize,scratchPath,p.Results.minFileSize,scoutNifti);
 
-        % Vectorize, detrend, and mean-center data
+    % Vectorize, detrend, and mean-center data
     dataPlot = [mainData.roiSignal];
     if std(dataPlot) ~= 0
         dataPlot = (dataPlot - mean(dataPlot))./std(dataPlot);
