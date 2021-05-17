@@ -1,4 +1,4 @@
-function [mainData,firstTriggerTime] = runNeurofeedback(subject,run,atScanner,varargin)
+function [mainData,firstTriggerTime] = runNeurofeedback(varargin)
 
 % The main function for the real-time fMRI pipeline on the scanner.
 %
@@ -93,13 +93,23 @@ mainData = runNeurofeedback(subject,run,atScanner,'sbref',sbref,'showFig',showFi
 %}
 debug = 0;
 
+%% Load global parameters
+fid = fopen("/blue/stevenweisberg/rtQuest/rtQuest/derivatives/realTime/global.json");
+raw = fread(fid,inf);
+str = char(raw');
+fclose(fid);
+global_params = jsondecode(str);
+
+subject = global_params.subject;
+run = global_params.run;
+atScanner = global_params.atScanner;
 %% Parse input
 p = inputParser;
 
 % Required input
-p.addRequired('subject',@isstr);
-p.addRequired('run',@isstr);
-p.addRequired('atScanner',@islogical);
+% p.addRequired('subject',@isstr);
+% p.addRequired('run',@isstr);
+% p.addRequired('atScanner',@islogical);
 
 % Optional params
 p.addParameter('sbref', '', @isstr);
@@ -114,8 +124,10 @@ p.addParameter('brainFileFormat','.nii',@isstr);
 if ~debug
     varargin = params();
 end
+
 % Parse
-p.parse( subject, run, atScanner, varargin{:});
+% p.parse( subject, run, atScanner, varargin{:});
+p.parse(varargin{:});
 
 % Check to see if a minimum file size was not given
 if any(strcmp(p.UsingDefaults, 'minFileSize'))
@@ -137,23 +149,16 @@ if atScanner
 else
     scannerPath = [scannerPathStem filesep subject filesep 'simulatedScannerDirectory' filesep 'run' run];
 end
-
-
-
-
-
 %% Register to First DICOM or SBREF
 
 % If there is an sbref, register to that. Else register to first DICOM.
 if ~isempty(p.Results.sbref)
     [initialDirSize,roiEPIName,scoutNifti] = registerToFirstDicom(subject,run,scannerPath,'sbref',p.Results.sbref,'brainFileFormat',p.Results.brainFileFormat,'roiName',p.Results.roiName);
 
-
     if p.Results.checkForTrigger
         firstTriggerTime = waitForTrigger;
     end
-
-
+    
 % If we are registering to the first DICOM, then we want to wait for the
 % trigger first, then register.
 else
@@ -186,14 +191,10 @@ mainData.dataTimepoint = {}; % time at which the DICOM was processed
 mainData.dicomName = {}; % name of the DICOM
 mainData.roiSignal = {}; % whatever signal is the output (default is mean)
 
-dataPlot = [];
-
 fprintf('Starting real-time processing sequence. To stop press CTRL+C.');
 
 i = 0;
 j = 1;
-
-% prevData = load('/blue/stevenweisberg/rtQuest/TOME_3021_rtMockScanner/raw/prevData.mat');
 
 while i < 10000000000
 
@@ -208,12 +209,12 @@ while i < 10000000000
      initialDirSize, mainData(j).dicomName] = ...
      checkForNewDicom(subject,run,scannerPath,roiIndex,initialDirSize,scratchPath,p.Results.minFileSize,scoutNifti);
 
-    % Vectorize, detrend, and mean-center data
-    dataPlot = [mainData.roiSignal];
+    % Normalize BOLD data
+    dataPlot = [mainData.roiSignal]; % vectorize
     if std(dataPlot) ~= 0
-        dataPlot = (dataPlot - mean(dataPlot))./std(dataPlot);
+        dataPlot = (dataPlot - mean(dataPlot))./std(dataPlot); % mean-center
     end
-    dataPlot = detrend(dataPlot);
+    dataPlot = detrend(dataPlot); % detrend
 
     % Simple line plot.
     cla reset;

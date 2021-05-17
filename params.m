@@ -1,5 +1,6 @@
 function c = params()
 %% Set parameter values
+% Comment out variables if you wish to use the default value
 
 %p.sbref='';
 %p.roiName='';
