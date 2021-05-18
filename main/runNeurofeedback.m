@@ -94,7 +94,7 @@ mainData = runNeurofeedback(subject,run,atScanner,'sbref',sbref,'showFig',showFi
 debug = 0;
 
 %% Load global parameters
-fid = fopen("/blue/stevenweisberg/rtQuest/rtQuest/derivatives/realTime/global.json");
+fid = fopen(fullfile(getpref('neurofeedback','globalVarPath'),'global.json'));
 raw = fread(fid,inf);
 str = char(raw');
 fclose(fid);
@@ -148,6 +148,9 @@ if atScanner
     scannerPath = scannerPath{1};
 else
     scannerPath = [scannerPathStem filesep subject filesep 'simulatedScannerDirectory' filesep 'run' run];
+    if ~exist(scannerPath,'dir')
+        mkdir(scannerPath)
+    end
 end
 %% Register to First DICOM or SBREF
 
@@ -222,7 +225,7 @@ while i < 10000000000
 
     % Write out a file to the run directory each time a new mainData struct is written.
     save(fullfile(runPath,'mainData'),'mainData');
-    writematrix(dataPlot,fullfile(runPath,'dataPlot.txt'));
+    writematrix(dataPlot,fullfile(runPath,strcat('fMRITimeseries_',run)));
 
     j = j + 1;
 
