@@ -119,7 +119,8 @@ while ~isNewDicom
             thisDicomPath = newDir(j).folder;
             
             targetIm = dicomToNiftiAndWorkspace(subject,run,thisDicomName,thisDicomPath,scratchPath,scoutNifti);
-            [roiSignal(j),dataTimepoint(j)] = scannerFunction(targetIm,roiIndex);
+            roiSignal(j) = mean(targetIm(roiIndex));
+            dataTimepoint(j) = datetime;
             dicomNames{j} = thisDicomName;
         end
         toc;
