@@ -1,16 +1,31 @@
-function [targetIm] = dicomToNiftiAndWorkspace(subject,run,dicomName,dicomPath,scratchPath,scoutNifti,varargin)
-% Function will take in a the name for NIFTI folder (from the file name of the DICOM)
-% a path to where the DICOM is, and a subject's path
-% and output the target image in the form of a 3d matrix.
+function [targetImage] = convertimage(subject,run,imageName,imagePath,scoutNifti,varargin)
+% Converts DICOMs to NIFTIs
+%
+% Syntax:
+%   targetImage = convertimage(subject,run,imageName,imagePath,scoutNifti,varargin)
+%
+% Inputs:
+%   subject               - String. The name/ID of the subject.
+%   run                   - String. The run or acquisition number. Will
+%                           generate a folder with the string 'run' before
+%                           it.
+%   imageName             - String. Name of image to convert
+%   imagePath             - String. Path to unconverted image
+%   scoutNifti            - String. Path to scout NIFTI image
+%
+% Outputs:
+%   targetImage           - Matrix. The converted NIFTI volume 
+%
+% NOTE: NIFTIs passed to this function will not undergo conversion
 %% Parse input
 p = inputParser;
 
 % Required input
 p.addRequired('subject');
 p.addRequired('run');
-p.addRequired('dicomName',@isstr);
-p.addRequired('dicomPath');
-p.addRequired('scratchPath');
+p.addRequired('imageName',@isstr);
+p.addRequired('imagePath');
+% p.addRequired('scratchPath');
 p.addRequired('scoutNifti');
 
 
@@ -21,9 +36,9 @@ p.addParameter('projectName','neurofeedback',@isstr);
 p.addParameter('brainFileFormat','.nii',@isstr)
 
 % Parse
-p.parse( subject, run, dicomName, dicomPath, scratchPath, scoutNifti, varargin{:});
+p.parse( subject, run, imageName, imagePath, scoutNifti, varargin{:});
 
-[~,~,~,~,~,subjectProcessedPath] = getPaths(subject,p.Results.projectName);
+[~,~,~,scratchPath,~,subjectProcessedPath] = getpaths(subject,p.Results.projectName);
 runPath = strcat(subjectProcessedPath,filesep,'processed',filesep,'run',run);
 
 
@@ -35,7 +50,7 @@ if contains(p.Results.brainFileFormat,'dcm')
 
     % Convert DICOM to NIFTI (.nii)
     % Save it in the scratchPath. 
-    command = horzcat('dcm2niix -s y -f %s_%r -o ',newNiftiPath,' ',fullfile(dicomPath,dicomName));
+    command = horzcat('dcm2niix -s y -f %s_%r -o ',newNiftiPath,' ',fullfile(imagePath,imageName));
         [status,cmdout] = system(command);
     if status ~= 0
         error('Could not convert dicom to nifti. Perhaps dcm2niix is not installed?\n %s',cmdout);
@@ -45,17 +60,17 @@ if contains(p.Results.brainFileFormat,'dcm')
     % Parse output of NIFTI conversion to extract filename
     pattern = regexp(cmdout, strcat(newNiftiPath, '/.*'), 'match');
     tokens = regexp(pattern{1}, '\s', 'split');
-    % filePath = regexp(tokens{1}, '/', 'split');
     filePath = tokens{1};
     niftiIn = strcat(filePath,'.nii');
     niftiOut = strcat(filePath,'_out.nii.gz');
     
 else
-    niftiIn = fullfile(dicomPath,dicomName);
-    niftiOut = fullfile(runPath,dicomName);
+    % NIFTI files do not need to be converted
+    niftiIn = fullfile(imagePath,imageName);
+    niftiOut = fullfile(runPath,imageName);
 end
 
-% register first volume of old functional scan to new functional scan
+% Register first volume of old functional scan to new functional scan
 system(horzcat('3dvolreg -base ',scoutNifti,' -input ',niftiIn,' -prefix ',niftiOut));
 
 % roiName = ['ROI_to_new',ap_or_pa,'_bin.nii.gz'];
@@ -66,7 +81,7 @@ system(horzcat('3dvolreg -base ',scoutNifti,' -input ',niftiIn,' -prefix ',nifti
 
 % Load nifti into MATLAB
 targetNifti = niftiinfo(niftiIn);
-targetIm = niftiread(targetNifti);
+targetImage = niftiread(targetNifti);
 disp(niftiIn);
 
 end

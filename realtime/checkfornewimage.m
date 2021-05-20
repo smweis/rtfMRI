@@ -1,27 +1,22 @@
-function [acqTime,dataTimepoint,roiSignal,initialDirSize,dicomNames] = checkForNewDicom(subject,run, scannerPath,roiIndex,initialDirSize,scratchPath,minFileSize,scoutNifti,varargin)
-% Check scanner path for new DICOM(s)
+function [acqTime,dataTimepoint,roiSignal,initialDirSize,imageNames] = checkfornewimage(subject,run, scannerPath,roiIndex,initialDirSize,scratchPath,minFileSize,scoutNifti,varargin)
+%% Check scanner path for new image(s)
 
-%% To do 
-% Add scannerFunction anonymous function handle as a required input
-%
 % Syntax:
-%  [acqTime,dataTimepoint,roiSignal,initialDirSize,dicomNames] = checkForNewDicom(scannerPath,roiIndex,initialDirSize,scratchPath,minFileSize)
+%  [acqTime,dataTimepoint,roiSignal,initialDirSize,imageNames] = checkfornewimage(subject,run, scannerPath,roiIndex,initialDirSize,scratchPath,minFileSize,scoutNifti,varargin)
 
 % Description:
-%  This function will check a scannerPath for new DICOMs. It does so by
+%  This function will check a scannerPath for new images. It does so by
 %  taking in the initialDirSize of the scannerPath and comparing it to the current
-%  size of the directory (newDir).
+%  size of the directory (imageDir).
 %
-%  When there is no new DICOM, the function will be called after .01 seconds.
-%  When there is (are) new DICOM(s), it will process the last X DICOMS
+%  When there is no new image, the function will be called after .01 seconds.
+%  When there is (are) new image(s), it will process the last N images
 %  in the scannerPath by saving them to the scratchPath as NIFTIs and
-%  putting them in the workspace as targetIm with extractSignal.
+%  putting them in the workspace as targetImage with roiSignal.
 %
-%  Finally, this function will compute a function (scannerFunction), which will
-%  extract the roi (from roiIndex) and compute whatever function you want.
+%  Finally, this function will
+%  extract the ROI (from roiIndex) and compute whatever function you want.
 %  The default function is a mean over the ROI.
-%
-%  The last step is computed in a parallel for loop, which will save computation time.
 
 % Inputs:
 %   scannerPath           - path to directory where new DICOMs will appear.
@@ -39,10 +34,7 @@ function [acqTime,dataTimepoint,roiSignal,initialDirSize,dicomNames] = checkForN
 %                           in this iteration. Each entry is the output of
 %                           scannerFunction for each new DICOM.
 %  intialDirSize          - as an ouput, the length of scannerPath
-%  dicomNames             - file names of the new DICOMs.
-
-% Dependencies:
-%   scannerFunction, dicomToNiftiAndWorkspace
+%  imageNames             - file names of the new DICOMs.
 %% Parse input
 p = inputParser;
 
@@ -65,37 +57,36 @@ p.addParameter('brainFileFormat','.nii',@isstr)
 % Parse
 p.parse(subject, run, scannerPath, roiIndex, initialDirSize, scratchPath, minFileSize, scoutNifti, varargin{:});
 
+newDicomFound = false;
 
-isNewDicom = false;
-
-while ~isNewDicom
+while ~newDicomFound
     % Save an initial time stamp.
     acqTime = datetime;
 
     % Check files in scannerPath.
-    newDir = dir(strcat(scannerPath,filesep,'*',p.Results.brainFileFormat,'*'));
-    newDir = table2struct(sortrows(struct2table(newDir),'datenum'));
+    imageDir = dir(strcat(scannerPath,filesep,'*',p.Results.brainFileFormat,'*'));
+    imageDir = table2struct(sortrows(struct2table(imageDir),'datenum'));
 
     % If no new files, call the function again
-    if length(newDir) == initialDirSize
+    if length(imageDir) == initialDirSize
         pause(0.01);
 
-    % If there are new files, check for the number of DICOMs missed (missedDicomNumber)
+    % If there are new files, check for the number of DICOMs missed (nMissedImages)
     % then reset the number of files in the directory (initialDirSize)
-    % and then get the info of the new DICOMs (newDicoms).
-    elseif length(newDir) > initialDirSize
-        missedDicomNumber = length(newDir) - initialDirSize;
-        initialDirSize = length(newDir);
-        newDicoms = newDir(initialDirSize-missedDicomNumber+1:initialDirSize);
-        isNewDicom = true;
+    % and then get the info of the new DICOMs (newImageArray).
+    elseif length(imageDir) > initialDirSize
+        nMissedImages = length(imageDir) - initialDirSize;
+        initialDirSize = length(imageDir);
+        newImageArray = imageDir(initialDirSize-nMissedImages+1:initialDirSize);
+        newDicomFound = true;
         fprintf('New file found\n');
         
         % Wait for file transfer to complete
         fileWait = true;
-        initialFileSize = newDicoms(1).bytes;
+        initialFileSize = newImageArray(1).bytes;
         while fileWait
             pause(0.2);
-            newFileSize = dir(strcat(scannerPath,filesep,newDicoms(1).name)).bytes;
+            newFileSize = dir(strcat(scannerPath,filesep,newImageArray(1).name)).bytes;
             
             % If no new bytes have been written AND file size is over
             % threshold, then we say that the file transfer has finished
@@ -105,23 +96,21 @@ while ~isNewDicom
                 initialFileSize = newFileSize;
             end
         end
-
-        % Process the DICOMs into NIFTIs in a parallel computing loop.
+        
         % For each new DICOM, dicomToNiftiAndWorkspace will save it as a NIFTI in the
-        % scratchPath and as a targetIm in the workspace. Then it will computed
-        % scannerFunction, and return the signal in the ROI (roiSignal) and a timestamp (dataTimePoint).
-        % Each loop will also save the dicomName.
+        % scratchPath and as a targetImage in the workspace. 
+        % Each loop will also save the imageName.
         tic;
-        % Note: newDicoms is in ascending order according to DICOM age
-        for j = length(newDicoms):-1:1
-            thisDicomName = newDicoms(j).name;
-            disp(thisDicomName);
-            thisDicomPath = newDir(j).folder;
+        % Note: newImageArray is in ascending order according to DICOM age
+        for iImage = length(newImageArray):-1:1
+            imageName = newImageArray(iImage).name;
+            disp(imageName);
+            imagePath = imageDir(iImage).folder;
             
-            targetIm = dicomToNiftiAndWorkspace(subject,run,thisDicomName,thisDicomPath,scratchPath,scoutNifti);
-            roiSignal(j) = mean(targetIm(roiIndex));
-            dataTimepoint(j) = datetime;
-            dicomNames{j} = thisDicomName;
+            targetImage = convertimage(subject,run,imageName,imagePath,scoutNifti);
+            roiSignal(iImage) = mean(targetImage(roiIndex));
+            dataTimepoint(iImage) = datetime;
+            imageNames{iImage} = imageName;
         end
         toc;
     end
