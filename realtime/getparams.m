@@ -1,8 +1,8 @@
-function c = params()
+function c = getparams()
 %% Set parameter values
 % Comment out variables if you wish to use the default value
 
-%p.sbref='';
+p.sbref='sbRef_RT-fMR_e1_d1.nii';
 %p.roiName='';
 p.showFig=true;
 p.checkForTrigger=true;

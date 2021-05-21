@@ -138,7 +138,7 @@ maskedT1 = [subjectProcessedPath '/T1_masked.nii.gz'];
 cd(codePath);
 
 % Run registration script
-[error,output] = system(sprintf('wsl --exec ./main/registerEpiToEpi.sh %s %s %s %s %s %s %s',...,
+[error,output] = system(sprintf('wsl --exec ./realtime/registerepitoepi.sh %s %s %s %s %s %s %s',...,
 subjectProcessedPath, runPath, newEPI, maskedScoutEPI, roiTemplate, roiEPI, maskedT1),'-echo');
 
 % Spot check

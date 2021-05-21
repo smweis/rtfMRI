@@ -60,7 +60,7 @@ minFileSize = 1950000;
 mainData = runpipeline(subject,run,atScanner,'sbref',sbref,'showFig',showFig,'checkForTrigger',checkForTrigger,'minFileSize',minFileSize);
 
 % 2. Sanity check.
-subject = 'Ozzy_Test';
+subject = 'test';
 run = '0';
 sbref = 'GKA_0806567_201914421414111_006_000001.dcm';
 atScanner = true;
@@ -94,15 +94,15 @@ mainData = runpipeline(subject,run,atScanner,'sbref',sbref,'showFig',showFig,'ch
 debug = 0;
 
 %% Load global parameters
-fid = fopen(fullfile(getpref('neurofeedback','globalVarPath'),'global.json'));
-raw = fread(fid,inf);
-str = char(raw');
-fclose(fid);
-global_params = jsondecode(str);
-
-subject = global_params.subject;
-run = global_params.run;
-atScanner = global_params.atScanner;
+% fid = fopen(fullfile(getpref('neurofeedback','globalVarPath'),'global.json'));
+% raw = fread(fid,inf);
+% str = char(raw');
+% fclose(fid);
+% global_params = jsondecode(str);
+% 
+% subject = global_params.subject;
+% run = global_params.run;
+% atScanner = global_params.atScanner;
 %% Parse input
 p = inputParser;
 
@@ -134,6 +134,20 @@ if any(strcmp(p.UsingDefaults, 'minFileSize'))
     warning('The minimum file size was set by default to: 1950000 bytes. Verify that this file size is sufficiently close to your actual DICOM file size');
 end
 
+% Prompt user for input
+subject = input("Subject name: ",'s');
+run = input("Run #: ",'s');
+assert(~isnan(str2double(run)),"Run must be an integer");
+atScanner = input("Are you at the scanner (y/n): ",'s');
+if strcmp(atScanner,"y")
+    atScanner = true;
+elseif strcmp(atScanner,"n")
+    atScanner = false;
+else
+    error("Invalid input");
+end
+
+
 %% Get Relevant Paths
 
 [~, scannerPathStem, ~, scratchPath, ~, subjectProcessedPath] = getpaths(subject,p.Results.projectName);
@@ -152,6 +166,14 @@ else
         mkdir(scannerPath)
     end
 end
+
+% Write json file containing information for other pipeline modules
+globalVars.subject = subject;
+globalVars.run = run;
+
+fid = fopen(fullfile(runPath,'global.json'),'w');
+fprintf(fid,jsonencode(globalVars));
+fclose(fid);
 %% Register to First DICOM or SBREF
 
 % If there is an sbref, register to that. Else register to first DICOM.
