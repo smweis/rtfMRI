@@ -1,9 +1,8 @@
-% A script to test the functionality of the pipeline
+% A script to simulate the functionality of an MRI scanner
 
+disp("This script will simulate the expected behavior of an MRI scanner");
+disp("Currently, this script assumes that you have an SBREF file.");
 
-disp("This script will provide a test for the functionality of rtfmri.");
-disp("Currently, this script assumes that you have an SBREF file. Be sure to specify its name in your parameters (i.e. getparams)");
-disp("You will need two MATLAB instances open for this test. One will be running this test, while the other runs rtfmri.");
 subject = 'test';
 run = '0';
 
@@ -15,7 +14,7 @@ if ~exist(scannerPath,'dir')
     mkdir(scannerPath);
 end
 
-rawImagePath = "tests\imgs\";
+rawImagePath = "tests\imgs\functional";
 rawImageDir = dir(rawImagePath);
 rawImageDir = rawImageDir(3:end);
 
@@ -28,7 +27,6 @@ try
     disp("Copied SBREF");
 catch
     warning("No SBREF found.");
-    disp("Start the pipeline, then press any key to register the first dicom");
     copyfile(strcat(rawImagePath,rawImageDir(iImage).name),scannerPath);
     iImage = iImage + 1;
 end

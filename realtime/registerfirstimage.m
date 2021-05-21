@@ -99,8 +99,8 @@ if isempty(p.Results.sbref)
         error('Could not convert dicom to nifti. Perhaps dicm2niix is not installed?\n %s',cmdout);
     end
   end
-    oldDicomDir = dir(strcat(scannerPath,filesep,'*.nii*'));
-    oldDicomName = oldDicomDir.name;
+    regsitrationImageDir = dir(strcat(scannerPath,filesep,'*.nii*'));
+    registrationImage = regsitrationImageDir.name;
 else
     if contains(p.Results.sbref,'*dcm*')
         command = horzcat('dcm2niix -z y -s y -o ',scannerPath,' ',p.Results.sbref);
@@ -110,15 +110,15 @@ else
             error('Could not convert dicom to nifti. Perhaps dicm2niix is not installed?\n %s',cmdout);
         end
     end
-    oldDicomDir = dir(strcat(scannerPath,filesep,'*.nii*'));
-    oldDicomName = p.Results.sbref;
-    disp(['The name of the sbref file is ' oldDicomName]);
+    %regsitrationImageDir = dir(strcat(scannerPath,filesep,'*.nii*'));
+    registrationImage = p.Results.sbref;
+    disp(['The name of the sbref file is ' registrationImage]);
 end
 
 
 % Copy sbref into the run directory
 newEPI = strcat(runPath,filesep,'new_epi.nii.gz');
-copyfile(fullfile(scannerPath,oldDicomName),newEPI);
+copyfile(fullfile(scannerPath,registrationImage),newEPI);
 roiEPIName = strcat('epi_',p.Results.roiName);
 
 % Determine paths

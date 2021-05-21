@@ -92,17 +92,6 @@ mainData = runpipeline(subject,run,atScanner,'sbref',sbref,'showFig',showFig,'ch
   
 %}
 debug = 0;
-
-%% Load global parameters
-% fid = fopen(fullfile(getpref('neurofeedback','globalVarPath'),'global.json'));
-% raw = fread(fid,inf);
-% str = char(raw');
-% fclose(fid);
-% global_params = jsondecode(str);
-% 
-% subject = global_params.subject;
-% run = global_params.run;
-% atScanner = global_params.atScanner;
 %% Parse input
 p = inputParser;
 
@@ -251,4 +240,5 @@ while true
 
     pause(.01);
 
+end
 end
