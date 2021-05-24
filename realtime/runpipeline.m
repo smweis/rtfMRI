@@ -155,14 +155,6 @@ else
         mkdir(scannerPath)
     end
 end
-
-% Write json file containing information for other pipeline modules
-globalVars.subject = subject;
-globalVars.run = run;
-
-fid = fopen(fullfile(runPath,'global.json'),'w');
-fprintf(fid,jsonencode(globalVars));
-fclose(fid);
 %% Register to First DICOM or SBREF
 
 % If there is an sbref, register to that. Else register to first DICOM.
@@ -182,6 +174,14 @@ else
 
     [initialDirSize,roiEpiName,scoutNifti] = registerfirstimage(subject,run,scannerPath,'brainFileFormat',p.Results.brainFileFormat,'roiName',p.Results.roiName);
 end
+
+% Write json file containing information for other pipeline modules
+globalVars.subject = subject;
+globalVars.run = run;
+
+fid = fopen(fullfile(runPath,'global.json'),'w');
+fprintf(fid,jsonencode(globalVars));
+fclose(fid);
 %% Load the ROI
 
 roiEpiName = strcat('epi_',p.Results.roiName);
