@@ -22,23 +22,23 @@ end
 fprintf('Using scannerPath at: %s\n',scannerPath);
 
 % example-specific paths (not used outside of this script)
-anatPath = "C:\Users\jacob.frank\Documents\MATLAB\toolboxes\rtfmri\tests\imgs\anatomical";
-functPath = "tests\imgs\functional\";
-processedPath = strcat(scannerPath,'\processed');
+basePath = pwd;
+anatPath = fullfile(basePath,"tests","imgs","anatomical"); % location of reference images, ROIs, and matrices
+processedPath = fullfile(scannerPath,"processed");
 
 if ~exist(processedPath,'dir')
     mkdir(processedPath);
 end
 
-rawImagePath = "tests\imgs\functional\";
+rawImagePath = fullfile(basePath,"tests","imgs","functional"); % location of collected NIFTI images, including SBREF
 rawImageDir = dir(rawImagePath);
 rawImageDir = rawImageDir(3:end);
-rawImageDir = table2struct(sortrows(struct2table(rawImageDir),'datenum')); % sort struct by aquisition time
+rawImageDir = table2struct(sortrows(struct2table(rawImageDir),'datenum')); % sort by aquisition time
 
 % simulate MRI scanner by copying sbref to directory
 iImage = 2;
 try
-    copyfile(strcat(rawImagePath,"sbRef*"),scannerPath);
+    copyfile(fullfile(rawImagePath,"sbRef*"),scannerPath);
     disp("Copied SBREF to scannerPath");
 catch
     error("No SBREF found.");
@@ -52,7 +52,7 @@ registrationImage = sbref;
 dirLengthAfterRegistration = length(dir(strcat(scannerPath,filesep,'/*',brainFileFormat,'*')));
 
 % reassign sbref image to new_epi
-newEPI = strcat(processedPath,filesep,'new_epi.nii.gz');
+newEPI = fullfile(processedPath,'new_epi.nii.gz');
 copyfile(fullfile(scannerPath,registrationImage),newEPI);
 
 % define roiEPI
@@ -65,22 +65,22 @@ anatPathWsl = anatPathWsl(1:end-1);
 processedPathWsl = processedPathWsl(1:end-1);
 
 % verbose path output
-fprintf('\nImage files\n');
+fprintf('\nImage file path locations\n');
 maskedScoutEPI = [anatPathWsl '/scoutEPI_masked.nii.gz'];
-fprintf('\tmasked scout EPI: subjectProcessedPath/\n');
+fprintf('\tMasked Scout EPI: subjectProcessedPath/\n');
 roiTemplate = [anatPathWsl '/' roiName];
-fprintf('\troi template: bidsPath/derivatives/templates/\n');
+fprintf('\tROI Template: bidsPath/derivatives/templates/\n');
 roiEPI = [anatPathWsl '/' roiEPIName];
-fprintf('\troi EPI: subjectProcessedPath/\n');
+fprintf('\tROI EPI: subjectProcessedPath/\n');
 newEPI = [processedPathWsl '/new_epi.nii.gz'];
 % fprintf('new EPI: subjectProcessedPath/run#/processed');
 maskedT1 = [anatPathWsl '/T1_masked.nii.gz'];
-fprintf('\tmasked T1: subjectProcessedPath/\n');
+fprintf('\tMasked T1: subjectProcessedPath/\n');
 pause(1)
 
-fprintf('\nMat files\n');
+fprintf('\nMat file path locations\n');
 fprintf('\tanat2coreg,anat2standard,coreg2anat,standard2anat,standard2coreg: subjectProcessedPath/\n');
-fprintf('\ttimeseries,mainData: subjectProcessedPath/processed/run#/\n\n');
+fprintf('\ttimeseries,mainData: subjectProcessedPath/processed/run#/ (output)\n\n');
 
 % Run registration script
 [err,output] = system(sprintf('wsl --exec ./realtime/registerepitoepi.sh %s %s %s %s %s %s %s',...,
