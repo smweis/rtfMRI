@@ -1,42 +1,25 @@
 # rtfMRI
-# Documentation for UF HiPerGator pipeline to MRI Scanners
+A MATLAB toolbox enabling real-time fMRI image processing and BOLD signal extraction.
 
-## This document will be updated regularly to reglect the currect protocols for connecting MRI scanners to the HiPerGator
+## Dependencies
+* [Windows Subsystem for Linux](https://docs.microsoft.com/en-us/windows/wsl/install-win10)
+  * [FSL](https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/FslInstallation/Windows)
+  * [AFNI](https://afni.nimh.nih.gov/pub/dist/doc/htmldoc/background_install/install_instructs/steps_windows10.html)
+* [ToolboxToolbox](https://github.com/ToolboxHub/ToolboxToolbox)
 
-### Last edited on 10/22/2020 by Zachary Boogaart
+## Usage
+In MATLAB, run `tbUseProject('neurofeedback');` or `tbUse('rtfmri')` in the console, depending on your use case (full pipeline or isolated module, respectively). 
+### Testing
+* Example
+  * This will use sample neuroimaging data to ensure that the pipeline is set up correctly
+  * Run `example;` from the console
+* Simulate
+  * This will simulate the functionality of an MRI scanner to test any changes to the pipeline
+  * Open up two instances of MATLAB
+    * In the first (1), run `simulatescanner;`
+    * In the second (2), run `runpipeline()`
+    * After registration is completed in (2), follow the intructions to start the pipeline
+    * After starting the pipeline, start the simulated scanner in (1)
 
-### Protocol written with guidance from Jacob Frank and Steve Weisberg
-
-## **Protocol:**
-
-1. Get onto HiPerGator with preferred access method
-  - MobaXterm
-  - Git Bash
-  - Other SSH client
-2. Type into the HiPerGator client the following commands in order:
-  - ml fsl mricrogl afni
-  - ml matlab
-  - matlab
-3. Make a folder in your home directory
-  - clone repository to this local folder
-  - repository found here:
-4. Set local hook
-5. Run simulations or connect to scanner
-6. **IF SIMULATING**
-  - Go back to HiPerGator
-  - put in this directory:
-    - [PATH TO DATA], e.g., /blue/stevenweisberg/rtQuest/TOME_3021_rtMockScanner/simulatedScannerDirectory
-  - Remove all previous run folders
-  - go back to MATLAB
-    - run NeuroFeedback with desired specs (examples are in the code)
-  - look for "waiting for DICOM" from the console
-  - Run bash script rtsim.sh
-    - Press Enter
-  - Go back to MATLAB
-    - Look for "Check registration" and press key
-  - Press "Enter" in MobaXterm
-  - Backup the data that you want
-7. **IF SCANNING** (to be edited when we talk with HiPerGator people and MRI people)
-  - Ensure connection to scanner through data transfer from DICOMS
-  - Ensure that connection is terminated from HiPerGator and Scanner when complete
-  - Backup all data to Google Drive
+### Parameters
+There are two ways to control the values of parameters in `rtfmri`: by file (default) or by command-line arguments. Changing parameter values by file is as simple as finding the desired parameter in `getparams()` and editing its value. If you find yourself testing different parameter values often, setting the debug flag in `runpipeline.m` to `1` allows you to enter parameters and values as command line arguments (see example in `runpipeline.m`). 
