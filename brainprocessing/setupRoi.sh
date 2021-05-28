@@ -25,20 +25,17 @@ bet $scout_epi $scout_epi_masked -R
 
 
 # Calculate first registration between T1 and standard (MNI)
-flirt -in $t1_masked -ref $mni -omat $sub_dir/anat2standard.mat -bins 256 -cost corratio -searchrx -180 180 -searchry -180 180 -searchrz -180 180 -dof 12
+flirt -ref $mni -in $t1_masked -omat $sub_dir/highres2standard.mat -bins 256 -cost corratio -searchrx -180 180 -searchry -180 180 -searchrz -180 180 -dof 12
 
 # Calculate second registration matrix from T1 -> scout EPI
-flirt -in $scout_epi_masked -ref $t1_masked -omat $sub_dir/coreg2anat.mat -bins 256 -cost corratio -searchrx -180 180 -searchry -180 180 -searchrz -180 180 -dof 6
+flirt -ref $t1_masked -in $scout_epi -omat $sub_dir/func2highres.mat -bins 256 -cost corratio -searchrx -180 180 -searchry -180 180 -searchrz -180 180 -dof 6
 
-# Invert those matrices
-convert_xfm -omat $sub_dir/standard2anat.mat -inverse $sub_dir/anat2standard.mat
-convert_xfm -omat $sub_dir/anat2coreg.mat -inverse $sub_dir/coreg2anat.mat
-
-# Concatenate these two registration matrices
-convert_xfm -omat $sub_dir/standard2coreg.mat -concat $sub_dir/standard2anat.mat  $sub_dir/anat2coreg.mat
+# Concatenate these two registration matrices then invert it
+convert_xfm -concat highres2standard.mat -omat func2standard.mat func2highres.mat
+convert_xfm -omat $sub_dir/standard2func.mat -inverse $sub_dir/func2standard.mat
 
 # Apply transform to ROI
-flirt -in $roi_template -ref $scout_epi_masked -out $roi_epi -applyxfm -init $sub_dir/standard2coreg.mat -interp trilinear
+flirt -in $roi_template -ref $scout_epi -out $roi_epi -applyxfm -init $sub_dir/standard2func.mat -interp trilinear
 
 # Binarize mask
 fslmaths $roi_epi -bin $roi_epi

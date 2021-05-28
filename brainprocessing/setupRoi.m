@@ -39,7 +39,7 @@ T1 = [subjectProcessedPath strcat('/',subject,'_desc-preproc_T1w.nii.gz')];
 T1_masked = [subjectProcessedPath '/T1_masked.nii.gz'];
 scoutEPI = [subjectProcessedPath '/scoutEPI.nii.gz'];
 scoutEPI_masked = [subjectProcessedPath '/scoutEPI_masked.nii.gz'];
-MNI = [bidsPath '/derivatives/templates/MNI152lin_T1_1mm_brain.nii.gz'];
+MNI = [bidsPath '/derivatives/templates/MNI152_T1_1mm_brain.nii.gz'];
 roiTemplate = [bidsPath '/derivatives/templates/' roiName];
 roiEPI = [subjectProcessedPath strcat('/epi_',roiName)];
 
