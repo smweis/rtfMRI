@@ -25,35 +25,42 @@ p.addRequired('scoutEPIName',@isstr);
 p.parse( roiName,subject,projectName,scoutEPIName,varargin{:});
 
 % % Set up paths
-[bidsPath, ~,codePath,~, ~, subjectProcessedPath] = getPaths(subject,projectName);
+[bidsPath, ~,codePath,~, ~, subjectProcessedPath] = getpaths(subject,projectName);
 
 
 % Where are all the files
 
-[~,subjectProcessedPath] = system(sprintf('wsl --exec wslpath %s',subjectProcessedPath));
-[~,bidsPath] = system(sprintf('wsl --exec wslpath %s',bidsPath));
-subjectProcessedPath = subjectProcessedPath(1:end-1);
-bidsPath = bidsPath(1:end-1);
+[~,wslSubjectProcessedPath] = system(sprintf('wsl --exec wslpath %s',subjectProcessedPath));
+[~,wslBidsPath] = system(sprintf('wsl --exec wslpath %s',bidsPath));
+wslSubjectProcessedPath = wslSubjectProcessedPath(1:end-1);
+wslBidsPath = wslBidsPath(1:end-1);
 
-T1 = [subjectProcessedPath strcat('/',subject,'_desc-preproc_T1w.nii.gz')];
-T1_masked = [subjectProcessedPath '/T1_masked.nii.gz'];
-scoutEPI = [subjectProcessedPath '/scoutEPI.nii.gz'];
-scoutEPI_masked = [subjectProcessedPath '/scoutEPI_masked.nii.gz'];
-MNI = [bidsPath '/derivatives/templates/MNI152_T1_1mm_brain.nii.gz'];
-roiTemplate = [bidsPath '/derivatives/templates/' roiName];
-roiEPI = [subjectProcessedPath strcat('/epi_',roiName)];
-
+% T1 = [subjectProcessedPath strcat('/',subject,'_desc-preproc_T1w.nii.gz')]; % newly acquired (select)
+[t1File,t1Path] = uigetfile(fullfile(subjectProcessedPath,'*.nii*'),'Select T1');
+[~,T1] = system(sprintf('wsl --exec wslpath %s', fullfile(t1Path,t1File)));
+T1_masked = [wslSubjectProcessedPath '/T1_masked.nii.gz'];
+%scoutEPI = [subjectProcessedPath '/scoutEPI.nii.gz']; % newly acquired sbref (select)
+[scoutFile,scoutPath] = uigetfile(fullfile(subjectProcessedPath,'*.nii*'),'Select Scout EPI');
+[~,scoutEPI] = system(sprintf('wsl --exec wslpath %s',fullfile(scoutPath,scoutFile)));
+scoutEPI_masked = [wslSubjectProcessedPath '/scoutEPI_masked.nii.gz'];
+% MNI = [bidsPath '/derivatives/templates/MNI152_T1_1mm_brain.nii.gz']; % template (select)
+[mniFile, mniPath] = uigetfile(fullfile(bidsPath,'derivatives','templates','*.nii*'),'Select MNI');
+[~,MNI] = system(sprintf('wsl --exec wslpath %s', fullfile(mniPath,mniFile)));
+%roiTemplate = [bidsPath '/derivatives/templates/' roiName]; % template (select)
+[templateFile, templatePath] = uigetfile(fullfile(bidsPath,'derivatives','templates','*.nii*'),'Select ROI template');
+[~,roiTemplate] = system(sprintf('wsl --exec wslpath %s', fullfile(templatePath,templateFile)));
+roiEPI = [wslSubjectProcessedPath strcat('/epi_',roiName)];
 
 cd(codePath)
 
+cmd = strcat('wsl --exec ./brainprocessing/setuproi.sh ');
+args = [' ' wslSubjectProcessedPath ' ' T1 ' ' T1_masked ' ' scoutEPI ' ' scoutEPI_masked ' ' MNI ' ' roiTemplate ' ' roiEPI];
+%system(sprintf('wsl --exec ./brainprocessing/setupRoi.sh %s %s %s %s %s %s %s %s',...,
+%wslSubjectProcessedPath, T1, T1_masked, scoutEPI, scoutEPI_masked, MNI, roiTemplate, roiEPI),'-echo');
+system(regexprep(strcat(cmd,args),'\s+',' '));
 
-system(sprintf('wsl --exec ./brainProcessing/setupRoi.sh %s %s %s %s %s  %s %s %s',...,
-subjectProcessedPath, T1, T1_masked, scoutEPI, scoutEPI_masked, MNI, roiTemplate, roiEPI)'-echo');
-
-
-
-% Hipergator version:
-%% Load in ants, fsl, mricron
+%% Hipergator version:
+% Load in ants, fsl, mricron
 % If it's in subject's space, it should go to MNI space.
 % system('ml ants');
 % system('ml fsl');
