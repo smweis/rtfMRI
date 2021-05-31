@@ -11,15 +11,15 @@ sub_dir=$1
 t1=$2
 t1_masked=$3
 scout_epi=$4
-scout_epi_masked=$5
-mni=$6
-roi_template=$7
-roi_epi=$8
+#scout_epi_masked=$5
+mni=$5
+roi_template=$6
+roi_epi=$7
 
 # Brain extract t1 and scout EPI
 bet $t1 $t1_masked -R
 
-bet $scout_epi $scout_epi_masked -R
+# bet $scout_epi $scout_epi_masked -R
 
 
 # Calculate first registration between T1 and standard (MNI)

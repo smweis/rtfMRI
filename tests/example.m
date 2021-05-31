@@ -124,14 +124,14 @@ fprintf('Starting real-time processing sequence. To stop press CTRL+C.');
 for i = iImage:length(rawImageDir)
     
     % copy niftis one-by-one as simulated MRI scanner
-    copyfile(strcat(rawImagePath,rawImageDir(i).name),scannerPath);
+    copyfile(fullfile(rawImagePath,rawImageDir(i).name),scannerPath);
     disp(strcat("Copied ",rawImageDir(i).name," to scannerPath"));
     pause(1);
 
     % Check for a new image, do some processing.
     [mainData(i).acqTime,mainData(i).dataTimepoint,mainData(i).roiSignal,...
      initialDirSize, mainData(i).dicomName] = ...
-     checkfornewimage(subject,run,scannerPath,roiIndex,initialDirSize,processedPath,minFileSize,scoutNifti);
+     checkfornewimage(subject,run,scannerPath,roiIndex,initialDirSize,minFileSize,scoutNifti);
 
     % Normalize BOLD data
     dataPlot = cell2mat([mainData.roiSignal]); % vectorize

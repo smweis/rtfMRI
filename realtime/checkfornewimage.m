@@ -1,4 +1,4 @@
-function [acqTime,dataTimepoint,roiSignal,initialDirSize,imageNames] = checkfornewimage(subject,run, scannerPath,roiIndex,initialDirSize,scratchPath,minFileSize,scoutNifti,varargin)
+function [acqTime,dataTimepoint,roiSignal,initialDirSize,imageNames] = checkfornewimage(subject,run, scannerPath,roiIndex,initialDirSize,minFileSize,scoutNifti,varargin)
 %% Check scanner path for new image(s)
 
 % Syntax:
@@ -44,7 +44,7 @@ p.addRequired('run');
 p.addRequired('scannerPath',@isstr);
 p.addRequired('roiIndex');
 p.addRequired('initialDirSize');
-p.addRequired('scratchPath');
+%p.addRequired('scratchPath');
 p.addRequired('minFileSize');
 p.addRequired('scoutNifti');
 
@@ -55,8 +55,12 @@ p.addParameter('projectName','neurofeedback',@isstr);
 p.addParameter('brainFileFormat','.nii',@isstr)
 
 % Parse
-p.parse(subject, run, scannerPath, roiIndex, initialDirSize, scratchPath, minFileSize, scoutNifti, varargin{:});
+p.parse(subject, run, scannerPath, roiIndex, initialDirSize, minFileSize, scoutNifti, varargin{:});
 
+% [~, ~, ~, scratchPath, ~, ~] = getpaths(subject,p.Results.projectName);
+
+
+%% Start loop
 newDicomFound = false;
 
 while ~newDicomFound

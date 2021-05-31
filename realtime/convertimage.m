@@ -71,7 +71,7 @@ else
 end
 
 % Register first volume of old functional scan to new functional scan
-system(horzcat('3dvolreg -base ',scoutNifti,' -input ',niftiIn,' -prefix ',niftiOut));
+system(join(['3dvolreg -base ',scoutNifti,' -input ',niftiIn,' -prefix ',niftiOut]));
 
 % roiName = ['ROI_to_new',ap_or_pa,'_bin.nii.gz'];
 % roiPath = [subjectPath filesep 'processed' filesep 'run1' filesep roiName];

@@ -219,7 +219,7 @@ while true
     % Check for a new dicom, do some processing.
     [mainData(i).acqTime,mainData(i).dataTimepoint,mainData(i).roiSignal,...
      initialDirSize, mainData(i).dicomName] = ...
-     checkfornewimage(subject,run,scannerPath,roiIndex,initialDirSize,scratchPath,p.Results.minFileSize,scoutNifti);
+     checkfornewimage(subject,run,scannerPath,roiIndex,initialDirSize,p.Results.minFileSize,scoutNifti);
 
     % Normalize BOLD data
     dataPlot = [mainData.roiSignal]; % vectorize
