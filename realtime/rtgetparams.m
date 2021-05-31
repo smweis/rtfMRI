@@ -1,8 +1,10 @@
-function c = getparams()
+function c = rtgetparams()
 %% Set parameter values
 % Comment out variables if you wish to use the default value
+disp('Selecting SBREF');
+[file,path] = uigetfile('*.nii*','Select SBREF');
+p.sbref=[path file];
 
-p.sbref='sbRef_RT-fMR_e1_d1.nii';
 %p.roiName='';
 p.showFig=true;
 p.checkForTrigger=true;

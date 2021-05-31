@@ -109,20 +109,6 @@ p.addParameter('minFileSize',1950000,@isnumeric);
 p.addParameter('projectName','neurofeedback',@isstr);
 p.addParameter('brainFileFormat','.nii',@isstr);
 
-% if not in debug mode, generate parameters
-if ~debug
-    varargin = getparams();
-end
-
-% Parse
-% p.parse( subject, run, atScanner, varargin{:});
-p.parse(varargin{:});
-
-% Check to see if a minimum file size was not given
-if any(strcmp(p.UsingDefaults, 'minFileSize'))
-    warning('The minimum file size was set by default to: 1950000 bytes. Verify that this file size is sufficiently close to your actual DICOM file size');
-end
-
 % Prompt user for input
 subject = input("Subject name: ",'s');
 run = input("Run #: ",'s');
@@ -136,6 +122,19 @@ else
     error("Invalid input");
 end
 
+% if not in debug mode, generate parameters
+if ~debug
+    varargin = rtgetparams();
+end
+
+% Parse
+% p.parse( subject, run, atScanner, varargin{:});
+p.parse(varargin{:});
+
+% Check to see if a minimum file size was not given
+if any(strcmp(p.UsingDefaults, 'minFileSize'))
+    warning('The minimum file size was set by default to: 1950000 bytes. Verify that this file size is sufficiently close to your actual DICOM file size');
+end
 
 %% Get Relevant Paths
 
@@ -159,8 +158,8 @@ end
 
 % If there is an sbref, register to that. Else register to first DICOM.
 if ~isempty(p.Results.sbref)
-    [initialDirSize,roiEpiName,scoutNifti] = registerfirstimage(subject,run,scannerPath,'sbref',p.Results.sbref,'brainFileFormat',p.Results.brainFileFormat,'roiName',p.Results.roiName);
-
+%     [initialDirSize,roiEpiName,scoutNifti] = registerfirstimage(subject,run,scannerPath,'sbref',p.Results.sbref,'brainFileFormat',p.Results.brainFileFormat,'roiName',p.Results.roiName);
+    setuproi(subject,p.Results.projectName,p.Results.sbref);
     if p.Results.checkForTrigger
         firstTriggerTime = waitfortrigger;
     end
@@ -187,7 +186,7 @@ fclose(fid);
 roiEpiName = strcat('epi_',p.Results.roiName);
 scoutNifti = strcat(runPath,filesep,'new_epi.nii.gz');
 initialDirSize = 1;
-roiPath = fullfile(runPath, roiEpiName);
+roiPath = fullfile(subjectProcessedPath, roiEpiName);
 
 % Load the NIFTI located at roiPath, and turn it into a logical index
 roiNiftiInfo = niftiinfo(roiPath);

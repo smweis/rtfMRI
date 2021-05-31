@@ -1,4 +1,4 @@
-function setuproi(subject,projectName,varargin)
+function [roiEpiName] = setuproi(subject,projectName,sbref,varargin)
 %
 % Syntax:
 %   setuproi(subject,projectName,varargin)
@@ -26,10 +26,11 @@ p = inputParser;
 p.addRequired('subject',@isstr);
 p.addRequired('projectName',@isstr);
 % p.addRequired('scoutEPIName',@isstr);
+p.addRequired('sbref',@isstr);
 
 p.addParameter('machine','local',@isstr);
 % Parse
-p.parse(subject,projectName,varargin{:});
+p.parse(subject,projectName,sbref,varargin{:});
 
 % % Set up paths
 [bidsPath, ~,codePath,~, ~, subjectProcessedPath] = getpaths(subject,projectName);
@@ -51,8 +52,8 @@ if strcmp(p.Results.machine,'local')
     T1_masked = [wslSubjectProcessedPath '/T1_masked.nii.gz'];
     
     % SBREF. Experimenters should select it at the scanner.
-    [scoutFile,scoutPath] = uigetfile(fullfile(subjectProcessedPath,'*.nii*'),'Select Scout EPI');
-    [~,scoutEPI] = system(sprintf('wsl --exec wslpath %s',fullfile(scoutPath,scoutFile)));
+    %[scoutFile,scoutPath] = uigetfile(fullfile(subjectProcessedPath,'*.nii*'),'Select Scout EPI');
+    [~,scoutEPI] = system(sprintf('wsl --exec wslpath %s',sbref));
     
     % MNI image. Experimenters should also be able to select this - the file should be whatever space the ROI is in.
     [refFile, refPath] = uigetfile(fullfile(bidsPath,'derivatives','templates','*.nii*'),'Select MNI');
@@ -63,7 +64,8 @@ if strcmp(p.Results.machine,'local')
     [~,roiReferenceSpace] = system(sprintf('wsl --exec wslpath %s', fullfile(refSpacePath,refSpaceFile)));
     
     % ROI in EPI space
-    roiEpiSpace = [wslSubjectProcessedPath strcat('/epi_',refSpaceFile)];
+    roiEpiName = strcat('epi_',refSpaceFile);
+    roiEpiSpace = [wslSubjectProcessedPath '/' roiEpiName];
     
     cd(codePath)
     
@@ -71,8 +73,14 @@ if strcmp(p.Results.machine,'local')
     cmd = strcat('wsl --exec ./brainprocessing/setuproi.sh ');
     args = [' ' wslSubjectProcessedPath ' ' T1 ' ' T1_masked ' ' scoutEPI ' ' referenceImage ' ' roiReferenceSpace ' ' roiEpiSpace];
     exec = regexprep(strcat(cmd,args),'\s+',' '); % replace all newline characters with spaces
-    system(exec,'-echo');
     
+    disp('Starting registration...');
+    [~,err] = system(exec,'-echo');
+    if ~err
+        disp('Registration complete');
+    else
+        error('Registration failed');
+    end
     %system(sprintf('wsl --exec ./brainprocessing/setupRoi.sh %s %s %s %s %s %s %s %s',...,
     %wslSubjectProcessedPath, T1, T1_masked, scoutEPI, scoutEPI_masked, MNI, roiTemplate, roiEPI),'-echo');
 
