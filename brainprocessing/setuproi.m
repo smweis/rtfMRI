@@ -75,12 +75,12 @@ if strcmp(p.Results.machine,'local')
     exec = regexprep(strcat(cmd,args),'\s+',' '); % replace all newline characters with spaces
     
     disp('Starting registration...');
-    [~,err] = system(exec,'-echo');
-    if ~err
-        disp('Registration complete');
-    else
-        error('Registration failed');
-    end
+    system(exec,'-echo');
+%     if ~err
+%         disp('Registration complete');
+%     else
+%         error('Registration failed');
+%     end
     %system(sprintf('wsl --exec ./brainprocessing/setupRoi.sh %s %s %s %s %s %s %s %s',...,
     %wslSubjectProcessedPath, T1, T1_masked, scoutEPI, scoutEPI_masked, MNI, roiTemplate, roiEPI),'-echo');
 

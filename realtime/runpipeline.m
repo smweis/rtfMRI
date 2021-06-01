@@ -154,6 +154,10 @@ else
         mkdir(scannerPath)
     end
 end
+
+if ~exist(runPath,'dir')
+    mkdir(runPath);
+end
 %% Register to First DICOM or SBREF
 
 % If there is an sbref, register to that. Else register to first DICOM.
@@ -178,7 +182,7 @@ end
 globalVars.subject = subject;
 globalVars.run = run;
 
-fid = fopen(fullfile(runPath,'global.json'),'w');
+fid = fopen(fullfile(subjectProcessedPath,'global.json'),'w');
 fprintf(fid,jsonencode(globalVars));
 fclose(fid);
 %% Load the ROI

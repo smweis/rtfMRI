@@ -38,7 +38,7 @@ pause;
 for i = iImage:length(rawImageDir)
     copyfile(strcat(rawImagePath,rawImageDir(i).name),scannerPath);
     disp(strcat("Copied ",rawImageDir(i).name));
-    pause(1);
+    pause(0.8);
 end
     
     
