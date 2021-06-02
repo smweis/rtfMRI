@@ -8,7 +8,11 @@ A MATLAB toolbox enabling real-time fMRI image processing and BOLD signal extrac
 * [ToolboxToolbox](https://github.com/ToolboxHub/ToolboxToolbox)
 
 ## Usage
-In MATLAB, run `tbUseProject('neurofeedback');` or `tbUse('rtfmri')` in the console, depending on your use case (full pipeline or isolated module, respectively). 
+In MATLAB, run `tbUseProject('neurofeedback');` in the console, then set your working directory to `toolboxes/rtfmri`. 
+To begin, run `runpipeline(...)` 
+
+This module will pull in image files from `scannerPath` and extract BOLD signal data, which is combined into a timeseries written to `fMRI_timeseries.txt`.
+
 ### Testing
 * Example
   * This will use sample neuroimaging data to ensure that the pipeline is set up correctly
@@ -22,4 +26,7 @@ In MATLAB, run `tbUseProject('neurofeedback');` or `tbUse('rtfmri')` in the cons
     * After starting the pipeline, start the simulated scanner in (1)
 
 ### Parameters
-There are two ways to control the values of parameters in `rtfmri`: by file (default) or by command-line arguments. Changing parameter values by file is as simple as finding the desired parameter in `getparams()` and editing its value. If you find yourself testing different parameter values often, setting the debug flag in `runpipeline.m` to `1` allows you to enter parameters and values as command line arguments (see example in `runpipeline.m`). 
+There are two ways to control the values of parameters in `rtfmri`: by file (default) or by command-line arguments. Changing parameter values by file is as simple as finding the desired parameter in `rtgetparams()` and editing its value. If you find yourself testing different parameter values often, setting the debug flag in `runpipeline.m` to `1` allows you to enter parameters and values as command line arguments (see example in `runpipeline.m`). 
+
+### Important Locations
+* `fMRI_timeseries.txt`: `subjectProcessedPath/processed/run#/`
