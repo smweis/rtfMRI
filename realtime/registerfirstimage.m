@@ -77,14 +77,14 @@ if isempty(p.Results.sbref) % Block of code runs if NO SBREF is passed.
           registrationImageName = imageDir(end).name;
           registrationImagePath = imageDir(end).folder;
           dirLengthAfterRegistration = length(dir(strcat(scannerPath,filesep,'*',p.Results.brainFileFormat,'*')));
-          registrationDicom = fullfile(registrationImagePath,registrationImageName);
+          registrationImage = fullfile(registrationImagePath,registrationImageName);
         else
             pause(0.01);
         end
     end
 else
     % If there's an sbref, set that image as the one to register
-    registrationDicom = p.Results.sbref;
+    registrationImage = p.Results.sbref;
     fprintf('Performing registration on SBREF\n');
 
     % Complete Registration to First DICOM
@@ -94,7 +94,7 @@ end
 % convert the first DICOM to a NIFTI
 if isempty(p.Results.sbref)
   if contains(p.Results.brainFileFormat,'dcm')
-    command = horzcat('dcm2niix -z y -s y -o ',scannerPath, ' ',registrationDicom);
+    command = horzcat('dcm2niix -z y -s y -o ',scannerPath, ' ',registrationImage);
     [status,cmdout] = system(command);
     assert(status == 0, sprintf('Could not convert dicom to nifti. Perhaps dicm2niix is not installed?\n %s',cmdout));
   end
@@ -112,7 +112,7 @@ else
     disp(['The name of the sbref file is ' registrationImage]);
 end
 
-
+setuproi(subject,run,'neurofeedback',fullfile(registrationImageDir.
 % Copy sbref into the run directory
 newEPI = strcat(runPath,filesep,'new_epi.nii.gz');
 copyfile(fullfile(scannerPath,registrationImage),newEPI);

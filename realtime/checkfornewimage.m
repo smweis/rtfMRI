@@ -1,4 +1,4 @@
-function [acqTime,dataTimepoint,roiSignal,initialDirSize,imageNames] = checkfornewimage(subject,run, scannerPath,roiIndex,initialDirSize,minFileSize,scoutNifti,varargin)
+function [acqTime,dataTimepoint,roiSignal,initialDirSize,imageNames] = checkfornewimage(subject,run, scannerPath,runPath,roiIndex,initialDirSize,minFileSize,scoutNifti,saveMatrix,varargin)
 %% Check scanner path for new image(s)
 
 % Syntax:
@@ -118,6 +118,11 @@ while ~newImageFound
             
             dataTimepoint(iImage) = datetime;
             imageNames{iImage} = imageName;
+            
+            if saveMatrix
+                writematrix(targetImage(:),fullfile(runPath,strcat('roiMVPATimeseries_',run)));
+            end
+
         end
         toc;
     end

@@ -49,7 +49,7 @@ if strcmp(p.Results.machine,'local')
     % Newly-acquired T1 scan. Experimenters can select it at the scanner.
     disp('Selecting T1...')
     [t1File,t1Path] = uigetfile(fullfile(subjectProcessedPath,'*.nii*'),'Select T1'); 
-    assert(t1File ~= 0,'No file selected');
+    assert(~isnumeric(t1File),'No file selected');
     [~,T1] = system(sprintf('wsl --exec wslpath %s', fullfile(t1Path,t1File)));
     
     % Masked T1 image
@@ -62,13 +62,13 @@ if strcmp(p.Results.machine,'local')
     % MNI image. Experimenters should also be able to select this - the file should be whatever space the ROI is in.
     disp('Selecting MNI...');
     [refFile, refPath] = uigetfile(fullfile(bidsPath,'derivatives','templates','*.nii*'),'Select MNI');
-    assert(refFile ~= 0,'No file selected');
+    assert(~isnumeric(refFile),'No file selected');
     [~,referenceImage] = system(sprintf('wsl --exec wslpath %s', fullfile(refPath,refFile)));
     
     % ROI (same space as the MNI file). Experimenters should select this (or these). 
     disp('Selecting ROI template...');
     [refSpaceFile, refSpacePath] = uigetfile(fullfile(bidsPath,'derivatives','templates','*.nii*'),'Select ROI template');
-    assert(refSpaceFile ~= 0,'No file selected');
+    assert(~isnumeric(refSpaceFile),'No file selected');
     [~,roiReferenceSpace] = system(sprintf('wsl --exec wslpath %s', fullfile(refSpacePath,refSpaceFile)));
     
     % ROI in EPI space

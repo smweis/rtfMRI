@@ -19,8 +19,8 @@ function [mainData,firstTriggerTime] = runpipeline(varargin)
 
 % Optional key/value pairs:
 %  'sbref'                - String. If included, the path to the sbref
-%                           DICOM. If sbref is empty, will register to the
-%                           first DICOM from the run.
+%                           image. If sbref is empty, will register to the
+%                           first image from the run.
 %  'showFig'              - Logical. If true, will show a figure of the
 %                           mean results.
 %  'checkForTrigger'      - Logical. If true, will wait for a trigger ('t').
@@ -29,7 +29,8 @@ function [mainData,firstTriggerTime] = runpipeline(varargin)
 %  'projectName'          - String. Name of project. Default =
 %                           'neurofeedback'
 %  'brainFileFormat'      - String. The brain image filetype (.dcm or .nii)
-
+%  'saveMatrix'           - Logical. If true, a text file containing the
+%                           vector of the ROI voxel values is writtem. 
 % Outputs:
 %   mainData              - Struct. Contains the main processed fMRI data
 %                           as well as time stamps.
@@ -108,6 +109,7 @@ p.addParameter('checkForTrigger', true, @islogical);
 p.addParameter('minFileSize',1950000,@isnumeric);
 p.addParameter('projectName','neurofeedback',@isstr);
 p.addParameter('brainFileFormat','.nii',@isstr);
+p.addParameter('saveMatrix',false,@islogical);
 
 % Prompt user for input
 subject = input("Subject name: ",'s');
@@ -115,6 +117,11 @@ run = input("Run #: ",'s');
 assert(~isnan(str2double(run)),"Run must be an integer");
 atScanner = input("Are you at the scanner (y/n): ",'s');
 assert(strcmpi(atScanner,'y') || strcmpi(atScanner,'n'),'Invalid input');
+if strcmpi(atScanner,'y')
+    atScanner = true;
+elseif strcmpi(atScanner,'n')
+    atScanner = false;
+end
 
 % if not in debug mode, generate parameters
 if ~debug
@@ -160,7 +167,7 @@ if ~isempty(p.Results.sbref)
         firstTriggerTime = waitfortrigger;
     end
     
-% If we are registering to the first DICOM, then we want to wait for the
+% If we are registering to the first image, then we want to wait for the
 % trigger first, then register.
 else
     if p.Results.checkForTrigger
@@ -174,7 +181,7 @@ end
 globalVars.subject = subject;
 globalVars.run = run;
 
-fid = fopen(fullfile(subjectProcessedPath,'global.json'),'w');
+fid = fopen(fullfile(subjectProcessedPath,'subjectParams.json'),'w');
 fprintf(fid,jsonencode(globalVars));
 fclose(fid);
 %% Load the ROI
@@ -214,7 +221,7 @@ while true
     % Check for a new dicom, do some processing.
     [mainData(i).acqTime,mainData(i).dataTimepoint,mainData(i).roiSignal,...
      initialDirSize, mainData(i).dicomName] = ...
-     checkfornewimage(subject,run,scannerPath,roiIndex,initialDirSize,p.Results.minFileSize,scoutNifti);
+     checkfornewimage(subject,run,scannerPath,runPath,roiIndex,initialDirSize,p.Results.minFileSize,scoutNifti,p.Results.saveMatrix);
 
     % Normalize BOLD data
     dataPlot = [mainData.roiSignal]; % vectorize
@@ -229,7 +236,7 @@ while true
 
     % Write out a file to the run directory each time a new mainData struct is written.
     save(fullfile(runPath,'mainData'),'mainData');
-    writematrix(dataPlot,fullfile(runPath,strcat('fMRITimeseries_',run)));
+    writematrix(dataPlot,fullfile(runPath,strcat('roiMeanTimeseries_',run)));
 
     i = i + 1;
 
