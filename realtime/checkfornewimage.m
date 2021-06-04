@@ -61,9 +61,9 @@ p.parse(subject, run, scannerPath, roiIndex, initialDirSize, minFileSize, scoutN
 
 
 %% Start loop
-newDicomFound = false;
+newImageFound = false;
 
-while ~newDicomFound
+while ~newImageFound
     % Save an initial time stamp.
     acqTime = datetime;
 
@@ -71,18 +71,18 @@ while ~newDicomFound
     imageDir = dir(strcat(scannerPath,filesep,'*',p.Results.brainFileFormat,'*'));
     imageDir = table2struct(sortrows(struct2table(imageDir),'datenum'));
 
-    % If no new files, call the function again
+    % If no new files, keep looping
     if length(imageDir) == initialDirSize
         pause(0.01);
 
-    % If there are new files, check for the number of DICOMs missed (nMissedImages)
+    % If there are new files, check for the number of images missed (nMissedImages)
     % then reset the number of files in the directory (initialDirSize)
-    % and then get the info of the new DICOMs (newImageArray).
+    % and then get the info of the new images (newImageArray).
     elseif length(imageDir) > initialDirSize
         nMissedImages = length(imageDir) - initialDirSize;
         initialDirSize = length(imageDir);
         newImageArray = imageDir(initialDirSize-nMissedImages+1:initialDirSize);
-        newDicomFound = true;
+        newImageFound = true;
         fprintf('New file found\n');
         
         % Wait for file transfer to complete
@@ -101,7 +101,7 @@ while ~newDicomFound
             end
         end
         
-        % For each new DICOM, dicomToNiftiAndWorkspace will save it as a NIFTI in the
+        % For each new image, convertimage() will save it as a NIFTI in the
         % scratchPath and as a targetImage in the workspace. 
         % Each loop will also save the imageName.
         tic;
@@ -111,8 +111,11 @@ while ~newDicomFound
             disp(imageName);
             imagePath = imageDir(iImage).folder;
             
+            % get the mean of the roi voxels
+            % TODO: vectorize and write targetImage
             targetImage = convertimage(subject,run,imageName,imagePath,scoutNifti);
             roiSignal(iImage) = mean(targetImage(roiIndex));
+            
             dataTimepoint(iImage) = datetime;
             imageNames{iImage} = imageName;
         end

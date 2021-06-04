@@ -1,4 +1,4 @@
-function [roiEpiName] = setuproi(subject,projectName,sbref,varargin)
+function [roiEpiName] = setuproi(subject,run,projectName,sbref,varargin)
 %
 % Syntax:
 %   setuproi(subject,projectName,varargin)
@@ -39,13 +39,17 @@ if strcmp(p.Results.machine,'local')
     % Convert Windows paths to Linux paths for WSL
     [~,wslSubjectProcessedPath] = system(sprintf('wsl --exec wslpath %s',subjectProcessedPath));
     [~,wslBidsPath] = system(sprintf('wsl --exec wslpath %s',bidsPath));
+    [~,wslRunPath] = system(sprintf('wsl --exec wslpath %s',fullfile(subjectProcessedPath,'processed',strcat('run',run))));
     wslSubjectProcessedPath = wslSubjectProcessedPath(1:end-1);
     wslBidsPath = wslBidsPath(1:end-1);
+    wslRunPath = wslRunPath(1:end-1);
     
     % Get files
     
     % Newly-acquired T1 scan. Experimenters can select it at the scanner.
+    disp('Selecting T1...')
     [t1File,t1Path] = uigetfile(fullfile(subjectProcessedPath,'*.nii*'),'Select T1'); 
+    assert(t1File ~= 0,'No file selected');
     [~,T1] = system(sprintf('wsl --exec wslpath %s', fullfile(t1Path,t1File)));
     
     % Masked T1 image
@@ -56,11 +60,15 @@ if strcmp(p.Results.machine,'local')
     [~,scoutEPI] = system(sprintf('wsl --exec wslpath %s',sbref));
     
     % MNI image. Experimenters should also be able to select this - the file should be whatever space the ROI is in.
+    disp('Selecting MNI...');
     [refFile, refPath] = uigetfile(fullfile(bidsPath,'derivatives','templates','*.nii*'),'Select MNI');
+    assert(refFile ~= 0,'No file selected');
     [~,referenceImage] = system(sprintf('wsl --exec wslpath %s', fullfile(refPath,refFile)));
     
     % ROI (same space as the MNI file). Experimenters should select this (or these). 
+    disp('Selecting ROI template...');
     [refSpaceFile, refSpacePath] = uigetfile(fullfile(bidsPath,'derivatives','templates','*.nii*'),'Select ROI template');
+    assert(refSpaceFile ~= 0,'No file selected');
     [~,roiReferenceSpace] = system(sprintf('wsl --exec wslpath %s', fullfile(refSpacePath,refSpaceFile)));
     
     % ROI in EPI space
@@ -71,16 +79,14 @@ if strcmp(p.Results.machine,'local')
     
     % compose WSL command and run registration script
     cmd = strcat('wsl --exec ./brainprocessing/setuproi.sh ');
-    args = [' ' wslSubjectProcessedPath ' ' T1 ' ' T1_masked ' ' scoutEPI ' ' referenceImage ' ' roiReferenceSpace ' ' roiEpiSpace];
+    args = [' ' wslRunPath ' ' T1 ' ' T1_masked ' ' scoutEPI ' ' referenceImage ' ' roiReferenceSpace ' ' roiEpiSpace];
     exec = regexprep(strcat(cmd,args),'\s+',' '); % replace all newline characters with spaces
     
     disp('Starting registration...');
-    system(exec,'-echo');
-%     if ~err
-%         disp('Registration complete');
-%     else
-%         error('Registration failed');
-%     end
+    status = system(exec,'-echo');
+    assert(status == 0, 'Registration failed');
+    
+    disp('Registration successful');
     %system(sprintf('wsl --exec ./brainprocessing/setupRoi.sh %s %s %s %s %s %s %s %s',...,
     %wslSubjectProcessedPath, T1, T1_masked, scoutEPI, scoutEPI_masked, MNI, roiTemplate, roiEPI),'-echo');
 

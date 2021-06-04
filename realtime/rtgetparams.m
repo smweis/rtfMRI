@@ -1,9 +1,11 @@
 function c = rtgetparams()
 %% Set parameter values
 % Comment out variables if you wish to use the default value
-disp('Selecting SBREF');
+disp('Selecting SBREF...');
 [file,path] = uigetfile('*.nii*','Select SBREF');
-p.sbref=[path file];
+if file ~= 0
+    p.sbref=[path file];
+end
 
 %p.roiName='';
 p.showFig=true;

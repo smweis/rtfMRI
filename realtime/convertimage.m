@@ -52,10 +52,7 @@ if contains(p.Results.brainFileFormat,'dcm')
     % Save it in the scratchPath. 
     command = horzcat('dcm2niix -s y -f %s_%r -o ',newNiftiPath,' ',fullfile(imagePath,imageName));
         [status,cmdout] = system(command);
-    if status ~= 0
-        error('Could not convert dicom to nifti. Perhaps dcm2niix is not installed?\n %s',cmdout);
-    end
-
+    assert(status == 0,sprintf('Could not convert dicom to nifti. Perhaps dcm2niix is not installed?\n %s',cmdout));
 
     % Parse output of NIFTI conversion to extract filename
     pattern = regexp(cmdout, strcat(newNiftiPath, '/.*'), 'match');

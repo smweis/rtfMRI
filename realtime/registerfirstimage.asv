@@ -45,7 +45,7 @@ p.addParameter('projectName','neurofeedback',@isstr);
 p.addParameter('brainFileFormat','.nii',@isstr)
 
 % Parse
-p.parse( subject, run, scannerPath, runPath, varargin{:});
+p.parse( subject, run, scannerPath, varargin{:});
 
 [bidsPath, ~,codePath,~, ~,subjectProcessedPath] = getpaths(subject,p.Results.projectName);
 

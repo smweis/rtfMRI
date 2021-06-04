@@ -114,13 +114,7 @@ subject = input("Subject name: ",'s');
 run = input("Run #: ",'s');
 assert(~isnan(str2double(run)),"Run must be an integer");
 atScanner = input("Are you at the scanner (y/n): ",'s');
-if strcmp(atScanner,"y")
-    atScanner = true;
-elseif strcmp(atScanner,"n")
-    atScanner = false;
-else
-    error("Invalid input");
-end
+assert(strcmpi(atScanner,'y') || strcmpi(atScanner,'n'),'Invalid input');
 
 % if not in debug mode, generate parameters
 if ~debug
@@ -138,9 +132,11 @@ end
 
 %% Get Relevant Paths
 
-[~, scannerPathStem, ~, scratchPath, ~, subjectProcessedPath] = getpaths(subject,p.Results.projectName);
+[~, scannerPathStem, ~, ~, ~, subjectProcessedPath] = getpaths(subject,p.Results.projectName);
 
-runPath = [subjectProcessedPath filesep 'processed' filesep 'run' run];
+runPath = fullfile(subjectProcessedPath,'processed',strcat('run',run));
+assert(~exist(runPath,'dir'),['Delete ' runPath ' then re-run']);
+mkdir(runPath);
 
 % If we're at the scanner, get the most recently created folder on the scanner path.
 if atScanner
@@ -149,21 +145,17 @@ if atScanner
     scannerPath = strcat(table2cell(thisSessionPathSorted(end,'folder')), filesep, table2cell(thisSessionPathSorted(end,'name')));
     scannerPath = scannerPath{1};
 else
-    scannerPath = [scannerPathStem filesep subject filesep 'simulatedScannerDirectory' filesep 'run' run];
+    scannerPath = fullfile(scannerPathStem,subject,'simulatedScannerDirectory',strcat('run',run));
     if ~exist(scannerPath,'dir')
         mkdir(scannerPath)
     end
-end
-
-if ~exist(runPath,'dir')
-    mkdir(runPath);
 end
 %% Register to First DICOM or SBREF
 
 % If there is an sbref, register to that. Else register to first DICOM.
 if ~isempty(p.Results.sbref)
 %     [initialDirSize,roiEpiName,scoutNifti] = registerfirstimage(subject,run,scannerPath,'sbref',p.Results.sbref,'brainFileFormat',p.Results.brainFileFormat,'roiName',p.Results.roiName);
-    setuproi(subject,p.Results.projectName,p.Results.sbref);
+    setuproi(subject,run,p.Results.projectName,p.Results.sbref);
     if p.Results.checkForTrigger
         firstTriggerTime = waitfortrigger;
     end
@@ -175,7 +167,7 @@ else
         firstTriggerTime = waitfortrigger;
     end
 
-    [initialDirSize,roiEpiName,scoutNifti] = registerfirstimage(subject,run,scannerPath,'brainFileFormat',p.Results.brainFileFormat,'roiName',p.Results.roiName);
+    [initialDirSize,roiEpiName,scoutNifti] = registerfirstimage(subject,run,scannerPath,runPath,'brainFileFormat',p.Results.brainFileFormat,'roiName',p.Results.roiName);
 end
 
 % Write json file containing information for other pipeline modules
