@@ -7,7 +7,7 @@ function [mainData,firstTriggerTime] = runpipeline(varargin)
 %
 % Description:
 %	Takes in the subject and run IDs. Can either simulate the pipeline
-%	based on 'fake' scanner data (a local directory of DICOMs) or based on
+%	based on 'fake' scanner data (a local directory of images) or based on
 %	data actually being acquired at the scanner.
 %
 % Optional key/value pairs:
@@ -41,11 +41,10 @@ function [mainData,firstTriggerTime] = runpipeline(varargin)
 the simulatedscanner script located in tests/
 
 Instance 1 (debug set to 1):
-    sbref = '';
     showFig = true;
     checkForTrigger = false;
     minFileSize = 1950000;
-    mainData = runpipeline('sbref',sbref,'showFig',showFig,'checkForTrigger',checkForTrigger,'minFileSize',minFileSize);
+    mainData = runpipeline('showFig',showFig,'checkForTrigger',checkForTrigger,'minFileSize',minFileSize);
 
 Instance 2:
     simulatedscanner;
@@ -68,7 +67,7 @@ mainData = runpipeline(subject,run,atScanner,'sbref',sbref,'showFig',showFig,'ch
 % Open command prompt
 % Navigate to C:\Users\jacob.frank\Documents\drinDataDumper_tobeshared_UFlorida\drinDataDumper_tobeshared_UFlorida
 % run python drinDumper.py -s 10.15.208.156 -o C:\Users\jacob.frank\Documents\blue\share\rtfmri_incoming\sub-102\simulatedScannerDirectory\run1 
-sbref = 'sbRef_RT-fMR_e1_d1.nii';
+sbref = 'C:\Users\jacob.frank\Documents\blue\share\rtfmri_incoming\test\simulatedScannerDirectory\run0\sbRef_RT-fMR_e1_d1.nii';
 showFig = true;
 checkForTrigger = true;
 minFileSize = 2900000;
@@ -98,6 +97,7 @@ p.addParameter('saveMatrix',false,@islogical);
 subject = input("Subject name: ",'s');
 run = input("Run #: ",'s');
 assert(~isnan(str2double(run)),"Run must be an integer");
+
 atScanner = input("Are you at the scanner (y/n): ",'s');
 assert(strcmpi(atScanner,'y') || strcmpi(atScanner,'n'),'Invalid input');
 if strcmpi(atScanner,'y')
@@ -106,18 +106,17 @@ elseif strcmpi(atScanner,'n')
     atScanner = false;
 end
 
-% if not in debug mode, generate parameters
+% If not in debug mode, generate parameters
 if ~debug
     varargin = rtgetparams();
 end
 
-% Parse
-% p.parse( subject, run, atScanner, varargin{:});
+% Parse command line input
 p.parse(varargin{:});
 
 % Check to see if a minimum file size was not given
 if any(strcmp(p.UsingDefaults, 'minFileSize'))
-    warning('The minimum file size was set by default to: 1950000 bytes. Verify that this file size is sufficiently close to your actual DICOM file size');
+    warning('The minimum file size was set by default to: 1950000 bytes. Verify that this file size is sufficiently close to your actual image file size');
 end
 
 %% Get Relevant Paths
@@ -141,9 +140,12 @@ else
     end
 end
 
-% sbref is located in scannerPath
-sbrefFile = fullfile(scannerPath,p.Results.sbref);
-
+if any(strcmp(p.UsingDefaults, 'sbref'))
+    warning('The sbref in scannerPath is being used by default. If this is incorrect, exit the script and enter the correct sbref.');
+    sbrefFile = fullfile(scannerPath,p.Results.sbref);
+else
+    sbrefFile = p.Results.sbref;
+end
 %% Register to First DICOM or SBREF
 
 % If there is an sbref, register to that. Else register to first DICOM.

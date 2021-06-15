@@ -15,12 +15,14 @@ minFileSize = 2900000;
 saveMatrix = 0;
 
 % get required paths and adjust to paramater values
-[~, scannerPathStem, ~, scratchPath, ~, subjectProcessedPath] = getpaths(subject,projectName);
+[~, scannerPathStem, codePath, scratchPath, ~, subjectProcessedPath] = getpaths(subject,projectName);
 scannerPath = [scannerPathStem filesep subject filesep 'simulatedScannerDirectory' filesep 'run' run];
 if ~exist(scannerPath,'dir')
     mkdir(scannerPath)
 end
 fprintf('Using scannerPath at: %s\n',scannerPath);
+
+cd(codePath);
 
 % example-specific paths (not used outside of this script)
 basePath = pwd;
@@ -39,7 +41,7 @@ rawImageDir = table2struct(sortrows(struct2table(rawImageDir),'datenum')); % sor
 % simulate MRI scanner by copying sbref to directory
 iImage = 2;
 try
-    copyfile(fullfile(rawImagePath,"sbRef*"),scannerPath);
+    copyfile(fullfile(rawImagePath,sbref),scannerPath);
     disp("Copied SBREF to scannerPath");
 catch
     error("No SBREF found.");
@@ -49,17 +51,17 @@ pause(1);
 %% register to SBREF
 fprintf('Performing registration on SBREF\n');
 registrationImage = sbref;
-% Complete Registration to First DICOM
-dirLengthAfterRegistration = length(dir(strcat(scannerPath,filesep,'/*',brainFileFormat,'*')));
 
-% reassign sbref image to new_epi
-newEPI = fullfile(runPath,'new_epi.nii.gz');
-copyfile(fullfile(scannerPath,registrationImage),newEPI);
+%dirLengthAfterRegistration = length(dir(strcat(scannerPath,filesep,'/*',brainFileFormat,'*')));
 
-% define roiEPI
-roiEPIName = strcat('epi_',roiName);
+% Reassign sbref image to new_epi
+newEpi = fullfile(runPath,'new_epi.nii.gz');
+copyfile(fullfile(scannerPath,registrationImage),newEpi);
 
-%% Determine paths
+% Define roiEPI
+roiEpiName = strcat('epi_',roiName);
+
+% Determine paths and set up images
 fprintf('\nImage file path locations\n');
 
 [~,anatPathWsl] = system(sprintf('wsl --exec wslpath %s',anatPath));
@@ -77,27 +79,20 @@ maskedT1 = [anatPathWsl '/T1_masked.nii.gz'];
 fprintf('\tMasked T1: subjectProcessedPath/\n');
 
 % sbref
-scoutEPI = strcat(scannerPathWsl,'/',sbref);
+scoutEPI = strcat(scannerPathWsl,'/',registrationImage);
 fprintf('\tScout EPI: scannerPath/run#\n');
-
 
 % MNI
 referenceImage = [anatPathWsl '/MNI152lin_T1_1mm_brain.nii.gz'];
 fprintf('\tMNI reference: bidsPath/derivatives/templates/\n');
-
-% maskedScoutEPI = [anatPathWsl '/scoutEPI_masked.nii.gz'];
-% fprintf('\tMasked Scout EPI: subjectProcessedPath/\n');
 
 % ROI template
 roiReferenceSpace = [anatPathWsl '/' roiName];
 fprintf('\tROI template: bidsPath/derivatives/templates/\n');
 
 % ROI in EPI space
-roiEpiSpace = [anatPathWsl '/' strcat('epi_',roiName)];
+roiEpiSpace = [anatPathWsl '/' roiEpiName];
 fprintf('\tROI EPI: subjectProcessedPath/\n');
-
-%newEPI = [processedPathWsl '/new_epi.nii.gz'];
-% fprintf('new EPI: subjectProcessedPath/run#/processed');
 
 pause(1)
 
@@ -105,20 +100,17 @@ fprintf('\nMat file path locations\n');
 fprintf('\tanat2coreg,anat2standard,coreg2anat,standard2anat,standard2coreg: subjectProcessedPath/\n');
 fprintf('\ttimeseries,mainData: subjectProcessedPath/processed/run#/ (output)\n\n');
 
-% compose WSL command and run registration script
+% Compose WSL command and run registration script
 cmd = strcat('wsl --exec ./brainprocessing/setuproi.sh ');
 args = [' ' processedPathWsl ' ' T1 ' ' maskedT1 ' ' scoutEPI ' ' referenceImage ' ' roiReferenceSpace ' ' roiEpiSpace];
 exec = regexprep(strcat(cmd,args),'\s+',' '); % replace all newline characters with spaces
 
 disp('Starting registration...');
-status = system(exec,'-echo');
-assert(status == 0, 'Registration failed');
+[status,cmdout] = system(exec,'-echo');
+assert(isempty(cmdout), 'Registration failed');
 
 disp('Registration successful');
 
-% redefine paths
-% roiEpiName = strcat('epi_',roiName);
-% scoutNifti = strcat(runPath,filesep,'new_epi.nii.gz');
 initialDirSize = 1;
 roiPath = fullfile(anatPath, roiEpiName);
 
@@ -134,7 +126,7 @@ hold on;
 disp("Press any key to begin");
 pause;
 
-%% Main Neurofeedback Loop
+%% Main Loop
 
 % Initialize the main data struct;
 mainData = struct;
@@ -145,9 +137,10 @@ mainData.roiSignal = {}; % whatever signal is the output (default is mean)
 
 fprintf('Starting real-time processing sequence. To stop press CTRL+C.');
 
+% Grab, process, and extract BOLD signal from new images
 for i = iImage:length(rawImageDir)
     
-    % copy niftis one-by-one as simulated MRI scanner
+    % Copy niftis one-by-one as simulated MRI scanner
     copyfile(fullfile(rawImagePath,rawImageDir(i).name),scannerPath);
     disp(strcat("Copied ",rawImageDir(i).name," to scannerPath"));
     pause(1);
