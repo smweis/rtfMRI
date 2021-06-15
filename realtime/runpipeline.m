@@ -3,20 +3,13 @@ function [mainData,firstTriggerTime] = runpipeline(varargin)
 % The main function for the real-time fMRI pipeline on the scanner.
 %
 % Syntax:
-%   mainData = runpipeline(subject,run,atScanner,varargin)
+%   mainData = runpipeline(varargin)
 %
 % Description:
 %	Takes in the subject and run IDs. Can either simulate the pipeline
 %	based on 'fake' scanner data (a local directory of DICOMs) or based on
 %	data actually being acquired at the scanner.
 %
-% Inputs:
-%   subject               - String. The name/ID of the subject.
-%   run                   - String. The run or acquisition number. Will
-%                           generate a folder with the string 'run' before
-%                           it.
-%   atScanner             - Logical. Are you actually at the scanner?
-
 % Optional key/value pairs:
 %  'sbref'                - String. If included, the path to the sbref
 %                           image. If sbref is empty, will register to the
@@ -34,6 +27,8 @@ function [mainData,firstTriggerTime] = runpipeline(varargin)
 % Outputs:
 %   mainData              - Struct. Contains the main processed fMRI data
 %                           as well as time stamps.
+%
+%   roiMeanTimeseries     - Array. Contains mean BOLD values for each trial
 
 
 
@@ -42,32 +37,23 @@ function [mainData,firstTriggerTime] = runpipeline(varargin)
 %{
 
 % 1. rtMockScanner
-% Run through a simulated scanner. Copy and paste the DICOMs from one
-% directory to another to make sure all paths are set up appropriately.
+% Run through a simulated scanner. Use a seperate instance of MATLAB to run
+the simulatedscanner script located in tests/
 
-% To run this, copy and paste the code below into Matlab. When you are
-% notified that the script is waiting for registration, copy and paste the
-% 'FakeFirstDICOM0000001.dcm' file from [subject]/run1_toCopy/ to [subject]/run1
-% After registration, copy and paste a set of dicoms from that same pair of
-% directories.
+Instance 1 (debug set to 1):
+    sbref = '';
+    showFig = true;
+    checkForTrigger = false;
+    minFileSize = 1950000;
+    mainData = runpipeline('sbref',sbref,'showFig',showFig,'checkForTrigger',checkForTrigger,'minFileSize',minFileSize);
 
-subject = 'TOME_3021_rtMockScanner';
-run = '1';
-atScanner = false;
-sbref = '';
-showFig = true;
-checkForTrigger = false;
-minFileSize = 1950000;
-mainData = runpipeline(subject,run,atScanner,'sbref',sbref,'showFig',showFig,'checkForTrigger',checkForTrigger,'minFileSize',minFileSize);
+Instance 2:
+    simulatedscanner;
 
 % 2. Sanity check.
-subject = 'test';
-run = '0';
-sbref = 'GKA_0806567_201914421414111_006_000001.dcm';
-atScanner = true;
-showFig = true;
-checkForTrigger = false;
-mainData = runpipeline(subject,run,atScanner,'sbref',sbref,'showFig',showFig,'checkForTrigger',checkForTrigger);
+% You should see a successful registration and plotting of the BOLD signal. 
+
+example;
 
 % 3. Q+.
 subject = 'Ozzy_Test';
@@ -82,17 +68,14 @@ mainData = runpipeline(subject,run,atScanner,'sbref',sbref,'showFig',showFig,'ch
 % Open command prompt
 % Navigate to C:\Users\jacob.frank\Documents\drinDataDumper_tobeshared_UFlorida\drinDataDumper_tobeshared_UFlorida
 % run python drinDumper.py -s 10.15.208.156 -o C:\Users\jacob.frank\Documents\blue\share\rtfmri_incoming\sub-102\simulatedScannerDirectory\run1 
-subject = 'sub-102';
-run = '1';
 sbref = 'sbRef_RT-fMR_e1_d1.nii';
-atScanner = false;
 showFig = true;
 checkForTrigger = true;
 minFileSize = 2900000;
-mainData = runpipeline(subject,run,atScanner,'sbref',sbref,'showFig',showFig,'checkForTrigger',checkForTrigger,'minFileSize',minFileSize);
+mainData = runpipeline('sbref',sbref,'showFig',showFig,'checkForTrigger',checkForTrigger,'minFileSize',minFileSize);
   
 %}
-debug = 0;
+debug = 1;
 %% Parse input
 p = inputParser;
 
@@ -102,7 +85,7 @@ p = inputParser;
 % p.addRequired('atScanner',@islogical);
 
 % Optional params
-p.addParameter('sbref', '', @isstr);
+p.addParameter('sbref', 'sbRef_RT-fMR_e1_d1.nii', @isstr);
 p.addParameter('roiName','kastner_v1lh_10.nii.gz',@isstr);
 p.addParameter('showFig', true, @islogical);
 p.addParameter('checkForTrigger', true, @islogical);
@@ -157,12 +140,16 @@ else
         mkdir(scannerPath)
     end
 end
+
+% sbref is located in scannerPath
+sbrefFile = fullfile(scannerPath,p.Results.sbref);
+
 %% Register to First DICOM or SBREF
 
 % If there is an sbref, register to that. Else register to first DICOM.
-if ~isempty(p.Results.sbref)
+if ~isempty(sbrefFile)
 %     [initialDirSize,roiEpiName,scoutNifti] = registerfirstimage(subject,run,scannerPath,'sbref',p.Results.sbref,'brainFileFormat',p.Results.brainFileFormat,'roiName',p.Results.roiName);
-    setuproi(subject,run,p.Results.projectName,p.Results.sbref);
+    setuproi(subject,run,p.Results.projectName,sbrefFile);
     if p.Results.checkForTrigger
         firstTriggerTime = waitfortrigger;
     end

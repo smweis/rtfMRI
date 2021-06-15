@@ -12,6 +12,7 @@ brainFileFormat = '.nii';
 roiName = 'kastner_v1lh_10.nii.gz';
 projectName = 'neurofeedback';
 minFileSize = 2900000;
+saveMatrix = 0;
 
 % get required paths and adjust to paramater values
 [~, scannerPathStem, ~, scratchPath, ~, subjectProcessedPath] = getpaths(subject,projectName);
@@ -24,10 +25,10 @@ fprintf('Using scannerPath at: %s\n',scannerPath);
 % example-specific paths (not used outside of this script)
 basePath = pwd;
 anatPath = fullfile(basePath,"tests","imgs","anatomical"); % location of reference images, ROIs, and matrices
-processedPath = fullfile(scannerPath,"processed");
+runPath = fullfile(scannerPath,"processed",strcat('run',run));
 
-if ~exist(processedPath,'dir')
-    mkdir(processedPath);
+if ~exist(runPath,'dir')
+    mkdir(runPath);
 end
 
 rawImagePath = fullfile(basePath,"tests","imgs","functional"); % location of collected NIFTI images, including SBREF
@@ -52,49 +53,72 @@ registrationImage = sbref;
 dirLengthAfterRegistration = length(dir(strcat(scannerPath,filesep,'/*',brainFileFormat,'*')));
 
 % reassign sbref image to new_epi
-newEPI = fullfile(processedPath,'new_epi.nii.gz');
+newEPI = fullfile(runPath,'new_epi.nii.gz');
 copyfile(fullfile(scannerPath,registrationImage),newEPI);
 
 % define roiEPI
 roiEPIName = strcat('epi_',roiName);
 
-% Determine paths
+%% Determine paths
+fprintf('\nImage file path locations\n');
+
 [~,anatPathWsl] = system(sprintf('wsl --exec wslpath %s',anatPath));
-[~,processedPathWsl] = system(sprintf('wsl --exec wslpath %s',processedPath));
+[~,processedPathWsl] = system(sprintf('wsl --exec wslpath %s',runPath));
+[~,scannerPathWsl] = system(sprintf('wsl --exec wslpath %s',scannerPath));
 anatPathWsl = anatPathWsl(1:end-1);
 processedPathWsl = processedPathWsl(1:end-1);
 
-% verbose path output
-fprintf('\nImage file path locations\n');
-maskedScoutEPI = [anatPathWsl '/scoutEPI_masked.nii.gz'];
-fprintf('\tMasked Scout EPI: subjectProcessedPath/\n');
-roiTemplate = [anatPathWsl '/' roiName];
-fprintf('\tROI Template: bidsPath/derivatives/templates/\n');
-roiEPI = [anatPathWsl '/' roiEPIName];
-fprintf('\tROI EPI: subjectProcessedPath/\n');
-newEPI = [processedPathWsl '/new_epi.nii.gz'];
-% fprintf('new EPI: subjectProcessedPath/run#/processed');
+% T1
+T1 = [anatPathWsl '/RTQEST_test2_MPRAGE_SENSE2_3_1.nii'];
+fprintf('\tT1: subjectProcessedPath/\n');
+
+% masked T1
 maskedT1 = [anatPathWsl '/T1_masked.nii.gz'];
 fprintf('\tMasked T1: subjectProcessedPath/\n');
+
+% sbref
+scoutEPI = strcat(scannerPathWsl,'/',sbref);
+fprintf('\tScout EPI: scannerPath/run#\n');
+
+
+% MNI
+referenceImage = [anatPathWsl '/MNI152lin_T1_1mm_brain.nii.gz'];
+fprintf('\tMNI reference: bidsPath/derivatives/templates/\n');
+
+% maskedScoutEPI = [anatPathWsl '/scoutEPI_masked.nii.gz'];
+% fprintf('\tMasked Scout EPI: subjectProcessedPath/\n');
+
+% ROI template
+roiReferenceSpace = [anatPathWsl '/' roiName];
+fprintf('\tROI template: bidsPath/derivatives/templates/\n');
+
+% ROI in EPI space
+roiEpiSpace = [anatPathWsl '/' strcat('epi_',roiName)];
+fprintf('\tROI EPI: subjectProcessedPath/\n');
+
+%newEPI = [processedPathWsl '/new_epi.nii.gz'];
+% fprintf('new EPI: subjectProcessedPath/run#/processed');
+
 pause(1)
 
 fprintf('\nMat file path locations\n');
 fprintf('\tanat2coreg,anat2standard,coreg2anat,standard2anat,standard2coreg: subjectProcessedPath/\n');
 fprintf('\ttimeseries,mainData: subjectProcessedPath/processed/run#/ (output)\n\n');
 
-% Run registration script
-[err,output] = system(sprintf('wsl --exec ./realtime/registerepitoepi.sh %s %s %s %s %s %s %s',...,
-anatPathWsl, processedPathWsl, newEPI, maskedScoutEPI, roiTemplate, roiEPI, maskedT1),'-echo');
+% compose WSL command and run registration script
+cmd = strcat('wsl --exec ./brainprocessing/setuproi.sh ');
+args = [' ' processedPathWsl ' ' T1 ' ' maskedT1 ' ' scoutEPI ' ' referenceImage ' ' roiReferenceSpace ' ' roiEpiSpace];
+exec = regexprep(strcat(cmd,args),'\s+',' '); % replace all newline characters with spaces
 
-if ~err
-    disp("Registration completed.");
-else
-    error("Registration failed.");
-end
+disp('Starting registration...');
+status = system(exec,'-echo');
+assert(status == 0, 'Registration failed');
+
+disp('Registration successful');
 
 % redefine paths
-roiEpiName = strcat('epi_',roiName);
-scoutNifti = strcat(processedPath,filesep,'new_epi.nii.gz');
+% roiEpiName = strcat('epi_',roiName);
+% scoutNifti = strcat(runPath,filesep,'new_epi.nii.gz');
 initialDirSize = 1;
 roiPath = fullfile(anatPath, roiEpiName);
 
@@ -131,7 +155,7 @@ for i = iImage:length(rawImageDir)
     % Check for a new image, do some processing.
     [mainData(i).acqTime,mainData(i).dataTimepoint,mainData(i).roiSignal,...
      initialDirSize, mainData(i).dicomName] = ...
-     checkfornewimage(subject,run,scannerPath,roiIndex,initialDirSize,minFileSize,scoutNifti);
+     checkfornewimage(subject,run,scannerPath,runPath,roiIndex,initialDirSize,minFileSize,scoutNifti,saveMatrix);
 
     % Normalize BOLD data
     dataPlot = cell2mat([mainData.roiSignal]); % vectorize

@@ -53,7 +53,7 @@ if strcmp(p.Results.machine,'local')
     [~,T1] = system(sprintf('wsl --exec wslpath %s', fullfile(t1Path,t1File)));
     
     % Masked T1 image
-    T1_masked = [wslSubjectProcessedPath '/T1_masked.nii.gz'];
+    maskedT1 = [wslSubjectProcessedPath '/maskedT1.nii.gz'];
     
     % SBREF. Experimenters should select it at the scanner.
     %[scoutFile,scoutPath] = uigetfile(fullfile(subjectProcessedPath,'*.nii*'),'Select Scout EPI');
@@ -79,7 +79,7 @@ if strcmp(p.Results.machine,'local')
     
     % compose WSL command and run registration script
     cmd = strcat('wsl --exec ./brainprocessing/setuproi.sh ');
-    args = [' ' wslRunPath ' ' T1 ' ' T1_masked ' ' scoutEPI ' ' referenceImage ' ' roiReferenceSpace ' ' roiEpiSpace];
+    args = [' ' wslRunPath ' ' T1 ' ' maskedT1 ' ' scoutEPI ' ' referenceImage ' ' roiReferenceSpace ' ' roiEpiSpace];
     exec = regexprep(strcat(cmd,args),'\s+',' '); % replace all newline characters with spaces
     
     disp('Starting registration...');
@@ -88,7 +88,7 @@ if strcmp(p.Results.machine,'local')
     
     disp('Registration successful');
     %system(sprintf('wsl --exec ./brainprocessing/setupRoi.sh %s %s %s %s %s %s %s %s',...,
-    %wslSubjectProcessedPath, T1, T1_masked, scoutEPI, scoutEPI_masked, MNI, roiTemplate, roiEPI),'-echo');
+    %wslSubjectProcessedPath, T1, maskedT1, scoutEPI, scoutEPI_masked, MNI, roiTemplate, roiEPI),'-echo');
 
 elseif strcmp('machine','hpg')
     % Hipergator version:
@@ -109,8 +109,8 @@ elseif strcmp('machine','hpg')
     roiTemplate = fullfile(bidsPath,'derivatives','templates',roiName);
     
     % % Mask brain
-    T1_masked = fullfile(subjectProcessedPath,'T1_masked.nii.gz');
-    command = sprintf('fslmaths %s -mul %s %s',T1,T1_brain_mask,T1_masked);
+    maskedT1 = fullfile(subjectProcessedPath,'maskedT1.nii.gz');
+    command = sprintf('fslmaths %s -mul %s %s',T1,T1_brain_mask,maskedT1);
     system(command);
     
     % % Register ROI to from MNI space to MPRAGE space.
@@ -125,7 +125,7 @@ elseif strcmp('machine','hpg')
     system(command);
     
     % % View anatomical ROI.
-    command=sprintf('mricron %s -o %s', T1_masked, roiT1);
+    command=sprintf('mricron %s -o %s', maskedT1, roiT1);
     system(command);
     
     

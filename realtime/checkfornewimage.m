@@ -47,6 +47,7 @@ p.addRequired('initialDirSize');
 %p.addRequired('scratchPath');
 p.addRequired('minFileSize');
 p.addRequired('scoutNifti');
+p.addRequired('saveMatrix');
 
 % Optional params
 p.addParameter('roiName','kastner_v1lh_10.nii.gz',@isstr);
@@ -55,7 +56,7 @@ p.addParameter('projectName','neurofeedback',@isstr);
 p.addParameter('brainFileFormat','.nii',@isstr)
 
 % Parse
-p.parse(subject, run, scannerPath, roiIndex, initialDirSize, minFileSize, scoutNifti, varargin{:});
+p.parse(subject, run, scannerPath, roiIndex, initialDirSize, minFileSize, scoutNifti, saveMatrix, varargin{:});
 
 % [~, ~, ~, scratchPath, ~, ~] = getpaths(subject,p.Results.projectName);
 
