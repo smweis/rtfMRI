@@ -36,11 +36,11 @@ function [mainData,firstTriggerTime] = runpipeline(varargin)
 
 %{
 
-% 1. rtMockScanner
+% 1. Subject: test; run: 0; atScanner: n
 % Run through a simulated scanner. Use a seperate instance of MATLAB to run
 the simulatedscanner script located in tests/
 
-Instance 1 (debug set to 1):
+Instance 1 (if debug set to 1):
     showFig = true;
     checkForTrigger = false;
     minFileSize = 1950000;
@@ -54,16 +54,7 @@ Instance 2:
 
 example;
 
-% 3. Q+.
-subject = 'Ozzy_Test';
-run = '1';
-sbref = '';
-atScanner = true;
-showFig = false;
-checkForTrigger = false;
-mainData = runpipeline(subject,run,atScanner,'sbref',sbref,'showFig',showFig,'checkForTrigger',checkForTrigger);
-
-% 4. UF
+% 3. UF
 % Open command prompt
 % Navigate to C:\Users\jacob.frank\Documents\drinDataDumper_tobeshared_UFlorida\drinDataDumper_tobeshared_UFlorida
 % run python drinDumper.py -s 10.15.208.156 -o C:\Users\jacob.frank\Documents\blue\share\rtfmri_incoming\sub-102\simulatedScannerDirectory\run1 
@@ -74,7 +65,7 @@ minFileSize = 2900000;
 mainData = runpipeline('sbref',sbref,'showFig',showFig,'checkForTrigger',checkForTrigger,'minFileSize',minFileSize);
   
 %}
-debug = 1;
+debug = 0;
 %% Parse input
 p = inputParser;
 
@@ -108,7 +99,7 @@ end
 
 % If not in debug mode, generate parameters
 if ~debug
-    varargin = rtgetparams();
+    varargin = rtgetparams(subject,run);
 end
 
 % Parse command line input
@@ -127,21 +118,20 @@ runPath = fullfile(subjectProcessedPath,'processed',strcat('run',run));
 assert(~exist(runPath,'dir'),['Delete ' runPath ' then re-run']);
 mkdir(runPath);
 
-% If we're at the scanner, get the most recently created folder on the scanner path.
+% Deteremine scannerPath
 if atScanner
-    thisSessionPath = dir(scannerPathStem);
-    thisSessionPathSorted = sortrows(struct2table(thisSessionPath),{'isdir','datenum'});
-    scannerPath = strcat(table2cell(thisSessionPathSorted(end,'folder')), filesep, table2cell(thisSessionPathSorted(end,'name')));
-    scannerPath = scannerPath{1};
+    scannerPath = fullfile(scannerPathStem,subject,strcat('run',run));
 else
     scannerPath = fullfile(scannerPathStem,subject,'simulatedScannerDirectory',strcat('run',run));
-    if ~exist(scannerPath,'dir')
-        mkdir(scannerPath)
-    end
 end
 
+if ~exist(scannerPath,'dir')
+    mkdir(scannerPath)
+end
+
+% Grab sbref in scannerPath if none supplied
 if any(strcmp(p.UsingDefaults, 'sbref'))
-    warning('The sbref in scannerPath is being used by default. If this is incorrect, exit the script and enter the correct sbref.');
+    warning('The sbref in scannerPath is being used by default. If this is incorrect, exit the script and select an sbref.');
     sbrefFile = fullfile(scannerPath,p.Results.sbref);
 else
     sbrefFile = p.Results.sbref;

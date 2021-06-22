@@ -16,7 +16,8 @@ saveMatrix = 0;
 
 % get required paths and adjust to paramater values
 [~, scannerPathStem, codePath, scratchPath, ~, subjectProcessedPath] = getpaths(subject,projectName);
-scannerPath = [scannerPathStem filesep subject filesep 'simulatedScannerDirectory' filesep 'run' run];
+
+scannerPath = fullfile(scannerPathStem,subject,'simulatedScannerDirectory',strcat('run',run));
 if ~exist(scannerPath,'dir')
     mkdir(scannerPath)
 end
@@ -52,11 +53,9 @@ pause(1);
 fprintf('Performing registration on SBREF\n');
 registrationImage = sbref;
 
-%dirLengthAfterRegistration = length(dir(strcat(scannerPath,filesep,'/*',brainFileFormat,'*')));
-
 % Reassign sbref image to new_epi
-newEpi = fullfile(runPath,'new_epi.nii.gz');
-copyfile(fullfile(scannerPath,registrationImage),newEpi);
+scoutNifti = fullfile(runPath,'new_epi.nii.gz');
+copyfile(fullfile(scannerPath,registrationImage),scoutNifti);
 
 % Define roiEPI
 roiEpiName = strcat('epi_',roiName);
@@ -148,7 +147,7 @@ for i = iImage:length(rawImageDir)
     % Check for a new image, do some processing.
     [mainData(i).acqTime,mainData(i).dataTimepoint,mainData(i).roiSignal,...
      initialDirSize, mainData(i).dicomName] = ...
-     checkfornewimage(subject,run,scannerPath,runPath,roiIndex,initialDirSize,minFileSize,scoutNifti,saveMatrix);
+     checkfornewimage(subject,run,scannerPath,runPath,roiIndex,initialDirSize,minFileSize,scoutEPI,saveMatrix);
 
     % Normalize BOLD data
     dataPlot = cell2mat([mainData.roiSignal]); % vectorize

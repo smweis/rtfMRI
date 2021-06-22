@@ -1,7 +1,6 @@
-function c = rtgetparams()
+function c = rtgetparams(subject,run)
 %% Set parameter values
 % Comment out variables if you wish to use the default value
-
 
 loadParams = input('Choose params file [1] or generate one [2]: ','s');
 if strcmp(loadParams,'1')
@@ -34,11 +33,15 @@ if strcmp(loadParams,'1')
         end
     end
 elseif strcmp(loadParams,'2')
+    disp('Choose a location to save the params file [subjectProcessedPath/]');
+    selPath = uigetdir;
+    
     disp('Selecting SBREF...');
     [file,path] = uigetfile('*.nii*','Select SBREF');
     if file ~= 0
         p.sbref=[path file];
     end
+    
     %p.roiName='';
     p.showFig=true;
     p.checkForTrigger=true; % flag for waiting on scanner trigger to begin
@@ -47,9 +50,9 @@ elseif strcmp(loadParams,'2')
     p.brainFileFormat='.nii'; % expected image file format (dcm or nii)
     p.saveMatrix=false; % flag for saving MVPA vector to file
     
-    disp('Choose a location to save the params file [subjectProcessedPath/]');
-    selPath = uigetdir;
-    fid = fopen(fullfile(selPath,'rtParams.json'),'wt');
+    % Save json
+    filename = strcat('rtParams_',subject,run,'.json');
+    fid = fopen(fullfile(selPath,filename),'wt');
     fprintf(fid,jsonencode(p));
     fclose(fid);
 else

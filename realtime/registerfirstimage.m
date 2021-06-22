@@ -2,32 +2,28 @@ function [dirLengthAfterRegistration,roiEPIName,newEPI] = registerfirstimage(sub
 % Register to the real time fmri sequence
 %
 % Syntax:
-% [dirLengthAfterRegistration,oldDicomName] = registerfirstimage(subject,run,scannerPath,varargin)
+% [dirLengthAfterRegistration,roiEPIName,newEPI] = registerfirstimage(subject,run,scannerPath,runPath,varargin)
 %
 % Description:
 % Part of the real-time fmri pipeline. Will apply a pre-calculated
 % registration matrix to new fmri data. This will either be based on a
 % single-band reference (sbref) image. Or, it will register to the
-% first DICOM collected. It will return whether the scan is AP or PA
-% direction based on whether PA or AP is present in the NIFTI file name.
+% first image collected.
 %
 % Inputs:
 %   subject                     - string specifying subject ID
-%   subjectPath                 - string specifying subject path (local)
 %   run                         - integer specifying run number
 %   scannerPath                 - string specifying path to dicoms
 %                                 (scanner)
-%   codePath                    - string specifying path to neurofeedback
-%                                 scripts
+%   runPath                    - string specifying path to run-specific dir
 % Optional Input:
-%   sbref                       - path and file name to the sbref image dicom
+%   sbref                       - path and file name to the sbref image
 %
 % Outputs:
-%   apOrPa                      - string specifying whether run is in the
-%                                 AP direction or the PA direction. Will
-%                                 return an empty string if not applicable.
 %   dirLengthAfterRegistration  - integer, specifying the number of files
 %                                 in the directory after registration
+%   roiEPIName                  - string. name of ROI in EPI space
+%   roiEPI                      - string. path to ROI in EPI space
 %% Parse input
 p = inputParser;
 
@@ -36,7 +32,6 @@ p.addRequired('subject',@isstr);
 p.addRequired('run',@isstr);
 p.addRequired('scannerPath',@isstr);
 p.addRequired('runPath',@isstr);
-
 
 % Optional params
 p.addParameter('roiName','kastner_v1lh_10.nii.gz',@isstr);
@@ -48,15 +43,6 @@ p.addParameter('brainFileFormat','.nii',@isstr)
 p.parse( subject, run, scannerPath, runPath, varargin{:});
 
 [bidsPath, ~,codePath,~, ~,subjectProcessedPath] = getpaths(subject,p.Results.projectName);
-
-% % Create the directory on the local computer where the registered
-% % images will go
-% runPath = strcat(subjectProcessedPath,filesep,'processed',filesep,'run',run);
-% if exist(runPath,'dir')
-%     warning(['Delete ' runPath ' then re-run']);
-% else
-%     mkdir(runPath);
-% end
 
 if isempty(p.Results.sbref) % Block of code runs if NO SBREF is passed.
     % Wait for the initial dicom
